@@ -1,0 +1,1955 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Calcul automatique de filtres Sallen-Key à gain unitaire : composants normalisés, schéma, réponse, tolérances, stabilité et rapport Excel.">
+<title>Calculateur Sallen-Key</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
+<script>
+window.MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] }, svg: { fontCache: 'global' }, options: { enableMenu: false } };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
+<style>
+/* Layout: nuage rose en tête avec la mascotte AOP, colonne de réglages en carte-bonbon, résultats en cartes arrondies type stickers */
+:root{
+  --paper:#fff1f7; --sheet:#ffffff; --ink:#4b2a55; --muted:#9a7aa3; --rule:#f6cde2; --grid:#fbe2ee;
+  --pink:#ff6fae; --pink-deep:#e94f93; --on-pink:#ffffff;
+  --accent:#8b74f0; --on-accent:#ffffff; --trace:#ff5c9d; --band:rgba(255,92,157,.18);
+  --soft-pink:#ffe3ef; --soft-lav:#ece6ff; --soft-mint:#dcf7ee; --soft-peach:#ffead9; --soft-sky:#e0f1ff;
+  --ok:#22a07c; --warn:#d98a12; --bad:#e8436a;
+  --shadow:0 6px 0 rgba(233,79,147,.13), 0 14px 30px -12px rgba(139,116,240,.25);
+  --f-display:"Fredoka","Baloo 2","Varela Round",system-ui,sans-serif;
+  --f-body:"Nunito","Varela Round",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"DM Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#22142b; --sheet:#2d1d38; --ink:#fbe8f3; --muted:#c9a7d2; --rule:#4a3258; --grid:#382647;
+  --pink:#ff86bd; --pink-deep:#ff9cc9; --on-pink:#2a1433;
+  --accent:#b4a5ff; --on-accent:#22142b; --trace:#ff86bd; --band:rgba(255,134,189,.2);
+  --soft-pink:#45233f; --soft-lav:#33284f; --soft-mint:#1f3b38; --soft-peach:#45302a; --soft-sky:#203245;
+  --ok:#6fe0b8; --warn:#ffc46b; --bad:#ff8aa5;
+  --shadow:0 6px 0 rgba(0,0,0,.25), 0 14px 30px -12px rgba(0,0,0,.5); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#22142b; --sheet:#2d1d38; --ink:#fbe8f3; --muted:#c9a7d2; --rule:#4a3258; --grid:#382647;
+  --pink:#ff86bd; --pink-deep:#ff9cc9; --on-pink:#2a1433;
+  --accent:#b4a5ff; --on-accent:#22142b; --trace:#ff86bd; --band:rgba(255,134,189,.2);
+  --soft-pink:#45233f; --soft-lav:#33284f; --soft-mint:#1f3b38; --soft-peach:#45302a; --soft-sky:#203245;
+  --ok:#6fe0b8; --warn:#ffc46b; --bad:#ff8aa5;
+  --shadow:0 6px 0 rgba(0,0,0,.25), 0 14px 30px -12px rgba(0,0,0,.5); color-scheme:dark}
+
+*,*::before,*::after{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15.5px/1.55 var(--f-body);
+  background-image:radial-gradient(var(--rule) 1.2px,transparent 1.4px);background-size:26px 26px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 56px}
+.page{max-width:1380px;margin:0 auto;display:grid;gap:22px}
+
+/* ---- en-tête ---- */
+.head{position:relative;display:flex;flex-wrap:wrap;gap:20px 28px;align-items:center;justify-content:space-between;
+  background:linear-gradient(135deg,var(--soft-pink),var(--soft-lav) 55%,var(--soft-sky));border-radius:32px;padding:26px 28px;box-shadow:var(--shadow);overflow:hidden}
+.head::before,.head::after{content:"✦";position:absolute;color:var(--pink);opacity:.55;font-size:22px;animation:twinkle 3.2s ease-in-out infinite}
+.head::before{top:14px;right:38%}
+.head::after{content:"✧";bottom:14px;left:46%;font-size:18px;color:var(--accent);animation-delay:1.4s}
+@keyframes twinkle{0%,100%{transform:scale(1) rotate(0);opacity:.55}50%{transform:scale(1.35) rotate(18deg);opacity:1}}
+.brand{display:flex;gap:18px;align-items:center;min-width:0;flex:1 1 420px}
+.mascot{flex:0 0 auto;width:96px;height:84px;animation:bob 3s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-6px) rotate(3deg)}}
+.mascot .body{fill:var(--sheet);stroke:var(--pink-deep);stroke-width:4;stroke-linejoin:round}
+.mascot .eye{fill:none;stroke:var(--ink);stroke-width:3.2;stroke-linecap:round}
+.mascot .blush{fill:var(--pink);opacity:.55}
+.mascot .mouth{fill:none;stroke:var(--ink);stroke-width:2.6;stroke-linecap:round}
+.mascot .lead{stroke:var(--pink-deep);stroke-width:4;stroke-linecap:round}
+.mascot .sign{fill:var(--pink-deep);font:700 15px var(--f-display)}
+.head-text{min-width:0}
+.eyebrow{display:inline-block;font:700 12px/1 var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--on-pink);background:var(--pink);padding:6px 12px;border-radius:999px;margin:0 0 12px}
+h1{font:600 clamp(34px,4.6vw,54px)/1 var(--f-display);margin:0;letter-spacing:-.01em;text-wrap:balance;color:var(--ink)}
+h1 span{color:var(--pink-deep)}
+.lede{max-width:62ch;margin:12px 0 0;color:var(--muted);font-weight:600}
+.cartouche{display:grid;grid-template-columns:repeat(3,minmax(0,auto));gap:8px;margin:0;flex:0 1 auto;position:relative;z-index:1}
+.cartouche div{padding:8px 14px 9px;background:var(--sheet);border-radius:16px;min-width:0;box-shadow:0 3px 0 var(--rule)}
+.cartouche dt{font:800 10px/1.2 var(--f-body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.cartouche dd{margin:3px 0 0;font:600 15px/1.15 var(--f-display);white-space:nowrap}
+@media (max-width:520px){.cartouche{grid-template-columns:repeat(2,minmax(0,1fr));width:100%}.mascot{width:72px;height:64px}}
+
+/* ---- réglages ---- */
+.layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:920px){.layout{grid-template-columns:minmax(0,1fr)}}
+.controls{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);background:var(--sheet);border-radius:28px;padding:20px;display:grid;gap:22px;max-height:calc(100vh - 24px);overflow:auto;box-shadow:var(--shadow);border:2px solid var(--rule)}
+@media (max-width:920px){.controls{position:static;max-height:none}}
+fieldset{border:0;padding:0;margin:0;display:grid;gap:12px;min-width:0}
+legend{font:600 15px/1 var(--f-display);color:var(--pink-deep);padding:0;margin-bottom:12px;width:100%;display:flex;align-items:center;gap:8px}
+legend::before{content:"♡";font-size:14px}
+.field{display:grid;gap:5px;min-width:0}
+.field>label,.lbl{font-size:13.5px;font-weight:700}
+input[type=text],select{font:600 14px/1.2 var(--f-body);padding:9px 12px;border:2px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:14px;width:100%;min-width:0;transition:border-color .15s,box-shadow .15s}
+input[type=text]:hover,select:hover{border-color:var(--pink)}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:none;border-color:var(--pink);box-shadow:0 0 0 4px color-mix(in srgb,var(--pink) 28%,transparent)}
+input:disabled,select:disabled{opacity:.5}
+.seg{display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--soft-pink)}
+.seg label{flex:1;position:relative;min-width:0}
+.seg label.off span{opacity:.35;cursor:not-allowed}
+.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg span{display:block;text-align:center;padding:7px 6px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;border-radius:999px;color:var(--ink);transition:background .15s,transform .15s}
+.seg label:hover span{background:color-mix(in srgb,var(--pink) 14%,transparent)}
+.seg input:checked+span{background:var(--pink);color:var(--on-pink);box-shadow:0 3px 0 var(--pink-deep);transform:translateY(-1px)}
+.seg input:focus-visible+span{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 40%,transparent)}
+.controls .seg span{font-size:12px;padding:7px 1px;letter-spacing:-.01em}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{font:600 12px/1.4 var(--f-body);color:var(--muted);margin:0}
+.field.bad input{border-color:var(--bad)}
+.field.bad .hint{color:var(--bad)}
+.check{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;font-weight:600}
+.check input{margin-top:3px;width:17px;height:17px;accent-color:var(--pink)}
+
+/* ---- résultats ---- */
+.results{display:grid;gap:22px;min-width:0}
+.panel{background:var(--sheet);border-radius:28px;padding:22px;min-width:0;box-shadow:var(--shadow);border:2px solid var(--rule)}
+.panel-head{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.panel h2{font:600 24px/1.15 var(--f-display);margin:0;display:flex;align-items:center;gap:10px}
+.panel h2::before{content:"";width:14px;height:14px;border-radius:50%;background:var(--pink);box-shadow:10px -6px 0 -3px var(--accent)}
+.panel h3{font:600 16.5px/1.2 var(--f-display);margin:18px 0 6px;color:var(--pink-deep)}
+.note{font-size:13.5px;color:var(--muted);margin:12px 0 0;max-width:80ch;font-weight:600}
+
+.alerts{display:grid;gap:10px}
+.alerts:empty{display:none}
+.alert{background:var(--soft-peach);padding:11px 16px 11px 44px;font-size:14px;border-radius:18px;position:relative}
+.alert::before{content:"!";position:absolute;left:12px;top:10px;width:22px;height:22px;border-radius:50%;background:var(--warn);color:var(--sheet);font:700 14px/22px var(--f-display);text-align:center}
+.alert.err{background:color-mix(in srgb,var(--bad) 16%,var(--sheet))}
+.alert.err::before{background:var(--bad);content:"×"}
+.alert.info{background:var(--soft-lav)}
+.alert.info::before{background:var(--accent);content:"i"}
+.alert b{font-weight:800}
+
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.kpi{padding:16px 18px;border-radius:24px;min-width:0;box-shadow:var(--shadow)}
+.kpi:nth-child(1){background:var(--soft-pink)}
+.kpi:nth-child(2){background:var(--soft-lav)}
+.kpi:nth-child(3){background:var(--soft-mint)}
+.kpi:nth-child(4){background:var(--soft-peach)}
+.kpi .k{font:800 10.5px/1.2 var(--f-body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.kpi .v{font:600 23px/1.2 var(--f-display);margin-top:6px;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:12.5px;color:var(--muted);margin-top:4px;font-weight:600}
+@media (max-width:760px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi .v{white-space:normal;font-size:21px}}
+
+.schem-wrap{overflow-x:auto;border-radius:22px;background-color:var(--paper);
+  background-image:radial-gradient(var(--rule) 1.3px,transparent 1.5px);background-size:16px 16px;border:2px dashed var(--rule)}
+.schem-wrap svg{display:block;margin:0 auto}
+.sv .w{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
+.sv .body{fill:var(--sheet);stroke:var(--ink);stroke-width:1.6}
+.sv rect.body{rx:6px}
+.sv .plate{stroke:var(--ink);stroke-width:3;stroke-linecap:round}
+.sv .opamp{fill:var(--soft-pink);stroke:var(--pink-deep);stroke-width:2;stroke-linejoin:round}
+.sv .face{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round}
+.sv .cheek{fill:var(--pink);opacity:.5}
+.sv text{fill:var(--ink)}
+.sv .ref{font:800 11px var(--f-body)}
+.sv .val{font:500 10.5px var(--f-mono)}
+.sv .pin{font:700 12px var(--f-mono);fill:var(--pink-deep)}
+.sv .box{fill:none;stroke:var(--accent);stroke-dasharray:2 5;stroke-width:2;stroke-linecap:round;rx:18px}
+.sv .boxlbl{font:700 11px var(--f-body);fill:var(--accent)}
+.sv .dot{fill:var(--pink-deep)}
+.sv .term{fill:var(--sheet);stroke:var(--pink-deep);stroke-width:2}
+.sv .comp{transition:opacity .15s}
+.sv .hl .body,.sv .hl .plate{stroke:var(--pink);stroke-width:2.4}
+.sv .hl text{fill:var(--pink-deep)}
+.sv.dim .comp:not(.hl){opacity:.35}
+
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted);align-items:center;font-weight:700}
+.legend i{display:inline-block;width:22px;height:0;border-top:3px solid var(--trace);border-radius:3px;vertical-align:middle;margin-right:6px}
+.legend i.ideal{border-top:3px dotted var(--accent)}
+.legend i.band{border-top:0;height:12px;border-radius:6px;background:var(--band)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.toolbar .seg{max-width:100%}
+.toolbar .seg label{flex:0 1 auto}
+.toolbar .seg span{padding:7px 16px;white-space:normal}
+.chart-host{position:relative;width:100%;min-width:0}
+.chart{display:block}
+.chart .gl-minor{stroke:var(--grid);stroke-width:1}
+.chart .gl-major{stroke:var(--rule);stroke-width:1.2}
+.chart .frame{fill:none;stroke:var(--rule);stroke-width:2;rx:14px}
+.chart .ax{font:600 11px var(--f-body);fill:var(--muted)}
+.chart .axt{font:700 11.5px var(--f-body);fill:var(--muted)}
+.chart .s-ideal{fill:none;stroke:var(--accent);stroke-width:2.4;stroke-dasharray:1 5;stroke-linecap:round}
+.chart .s-real{fill:none;stroke:var(--trace);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.chart .band{fill:var(--band);stroke:none}
+.chart .mk{stroke:var(--pink);stroke-dasharray:3 4;stroke-width:1.5}
+.chart .mkl{font:700 12px var(--f-display);fill:var(--pink-deep)}
+.chart .hov{stroke:var(--pink);stroke-width:1.5;opacity:.7}
+.chart .hd{stroke:var(--sheet);stroke-width:2}
+.chart .hd-ideal{fill:var(--accent)}
+.chart .hd-real{fill:var(--trace)}
+.tip{position:absolute;top:8px;pointer-events:none;background:var(--ink);color:var(--paper);font:600 12px/1.5 var(--f-body);padding:8px 12px;border-radius:14px;white-space:nowrap;z-index:2;font-variant-numeric:tabular-nums}
+.tip i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:0}
+.chart-gap{height:16px}
+
+.tolgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:16px 24px;align-items:start;margin-bottom:16px}
+@media (max-width:760px){.tolgrid{grid-template-columns:minmax(0,1fr)}}
+.tolstats{display:grid;gap:8px}
+.tolstat{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:10px 14px;border-radius:16px;background:var(--paper);align-items:baseline}
+.tolstat .k,.k-lbl{font:800 10.5px/1.2 var(--f-body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.tolstat .v{font:600 19px/1.2 var(--f-display);font-variant-numeric:tabular-nums;grid-column:1}
+.tolstat .r{font:700 12.5px var(--f-body);color:var(--muted);grid-column:2;grid-row:1/span 2;align-self:center;text-align:right;font-variant-numeric:tabular-nums}
+.k-lbl{margin-bottom:6px}
+.hist .bar{fill:var(--pink);opacity:.75}
+.hist .wc{stroke:var(--accent);stroke-dasharray:2 4;stroke-width:1.5;stroke-linecap:round}
+.hist .nom{stroke:var(--pink-deep);stroke-width:2.5;stroke-linecap:round}
+.hist .idl{stroke:var(--accent);stroke-width:2;stroke-dasharray:1 4;stroke-linecap:round}
+.verdict{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:20px;background:var(--soft-mint);margin-bottom:14px}
+.verdict .badge{font:600 14px/1 var(--f-display);padding:8px 14px;border-radius:999px;white-space:nowrap}
+.verdict .badge.ok{color:var(--sheet);background:var(--ok)}
+.verdict .badge.warn{color:var(--sheet);background:var(--warn)}
+.verdict .badge.bad{color:var(--sheet);background:var(--bad)}
+.verdict p{margin:0;font-size:14px;max-width:90ch}
+.verdict p+p{margin-top:6px;color:var(--muted);font-size:13px;font-weight:600}
+
+.tbl-wrap{overflow-x:auto;border-radius:18px;border:2px solid var(--rule)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th{font:800 10.5px/1.25 var(--f-body);text-transform:uppercase;letter-spacing:.07em;color:var(--pink-deep);text-align:left;padding:10px 12px;background:var(--soft-pink);white-space:nowrap}
+td{padding:8px 12px;border-top:1px dashed var(--rule);white-space:nowrap;vertical-align:middle}
+td.num,th.num{text-align:right}
+td.mono{font-family:var(--f-mono);font-size:13px}
+tbody tr:hover td{background:color-mix(in srgb,var(--pink) 7%,transparent)}
+.chip{display:inline-block;font:700 12px/1.5 var(--f-body);padding:1px 9px;border-radius:999px}
+.chip.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,transparent)}
+.chip.warn{color:var(--warn);background:color-mix(in srgb,var(--warn) 17%,transparent)}
+.chip.bad{color:var(--bad);background:color-mix(in srgb,var(--bad) 15%,transparent)}
+.chip.mod{color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,transparent)}
+td select{font:600 13px var(--f-body);padding:5px 10px;width:auto;border-radius:999px}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+button{font:700 13.5px var(--f-body);padding:9px 16px;border:0;background:var(--pink);color:var(--on-pink);border-radius:999px;cursor:pointer;box-shadow:0 4px 0 var(--pink-deep);transition:transform .12s,box-shadow .12s}
+button:hover{transform:translateY(-1px);box-shadow:0 5px 0 var(--pink-deep)}
+button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--pink-deep)}
+button:disabled{opacity:.45;cursor:default;transform:none}
+#btnReset{background:var(--soft-lav);color:var(--ink);box-shadow:0 4px 0 color-mix(in srgb,var(--accent) 40%,transparent)}
+.tf{font-size:15px;overflow-x:auto;padding:4px 16px;background:var(--paper);border-radius:18px;color:var(--ink)}
+.method{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:4px 28px}
+.method p{margin:6px 0;font-size:14.5px;max-width:68ch}
+.formula{font-size:15px;color:var(--ink);background:var(--paper);border-radius:16px;padding:2px 14px;margin:8px 0;overflow-x:auto;overflow-y:hidden}
+mjx-container{color:var(--ink)}
+.export-light{--paper:#fff1f7;--sheet:#ffffff;--ink:#4b2a55;--muted:#9a7aa3;--rule:#f6cde2;--grid:#fbe2ee;--pink:#ff6fae;--pink-deep:#e94f93;--accent:#8b74f0;--trace:#ff5c9d;--band:rgba(255,92,157,.18);--soft-pink:#ffe3ef}
+.head-side{display:grid;gap:12px;justify-items:end;position:relative;z-index:1;flex:0 1 auto}
+.export-row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:flex-end}
+#btnExport{font-size:14.5px;padding:11px 20px}
+@media (max-width:520px){.head-side{justify-items:stretch;width:100%}.export-row{justify-content:stretch}#btnExport{width:100%}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+<div class="page">
+  <header class="head">
+    <div class="brand">
+      <svg class="mascot" viewBox="0 0 110 96" aria-hidden="true">
+        <line class="lead" x1="4" y1="34" x2="22" y2="34"/><line class="lead" x1="4" y1="62" x2="22" y2="62"/><line class="lead" x1="88" y1="48" x2="106" y2="48"/>
+        <path class="body" d="M24 10 Q20 8 20 14 L20 82 Q20 88 25 85 L86 52 Q91 48 86 44 Z"/>
+        <text class="sign" x="27" y="39">+</text><text class="sign" x="28" y="67">−</text>
+        <path class="eye" d="M40 42 q4 -6 8 0"/><path class="eye" d="M56 42 q4 -6 8 0"/>
+        <ellipse class="blush" cx="38" cy="53" rx="5" ry="3.2"/><ellipse class="blush" cx="66" cy="53" rx="5" ry="3.2"/>
+        <path class="mouth" d="M47 52 q2.5 3.5 5 0 q2.5 3.5 5 0"/>
+      </svg>
+      <div class="head-text">
+        <p class="eyebrow">✿ Filtres actifs · gain unitaire</p>
+        <h1>Calculateur <span>Sallen-Key</span></h1>
+        <p class="lede">Choisis la réponse, l'ordre et la fréquence : le calculateur découpe le filtre en cellules, choisit les composants normalisés, dessine le schéma et compare la réponse obtenue à la réponse idéale.</p>
+      </div>
+    </div>
+    <div class="head-side">
+      <dl class="cartouche" id="cartouche"></dl>
+      <div class="export-row">
+        <span class="hint" id="exportMsg" aria-live="polite"></span>
+        <button type="button" id="btnExport" hidden>⬇ Exporter le rapport Excel</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <form class="controls" id="form" autocomplete="off">
+      <fieldset>
+        <legend>Gabarit</legend>
+        <div class="field">
+          <span class="lbl">Type</span>
+          <div class="seg" role="radiogroup" aria-label="Type de filtre">
+            <label><input type="radio" name="kind" id="kind-lp" value="lp" checked><span>Passe-bas</span></label>
+            <label><input type="radio" name="kind" id="kind-hp" value="hp"><span>Passe-haut</span></label>
+            <label><input type="radio" name="kind" id="kind-bp" value="bp"><span>Passe-bande</span></label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="approx">Réponse</label>
+          <select id="approx">
+            <option value="butter">Butterworth (plate)</option>
+            <option value="bessel">Bessel (phase linéaire)</option>
+            <option value="cheb">Tchebychev (ondulation)</option>
+          </select>
+        </div>
+        <div class="row2" id="chebFields" hidden>
+          <div class="field" id="f-ripple">
+            <label for="ripple">Ondulation (dB)</label>
+            <input type="text" id="ripple" value="1" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label for="chebRef">fc définie à</label>
+            <select id="chebRef">
+              <option value="-3">−3 dB</option>
+              <option value="ripple">fin d'ondulation</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <span class="lbl">Ordre</span>
+          <div class="seg mono" role="radiogroup" aria-label="Ordre du filtre">
+            <label><input type="radio" name="order" id="order-2" value="2"><span>2</span></label>
+            <label><input type="radio" name="order" id="order-3" value="3"><span>3</span></label>
+            <label><input type="radio" name="order" id="order-4" value="4" checked><span>4</span></label>
+            <label><input type="radio" name="order" id="order-5" value="5"><span>5</span></label>
+          </div>
+          <p class="hint" id="orderHint" hidden></p>
+        </div>
+        <div class="field" id="f-fc">
+          <label for="fc">Fréquence de coupure fc</label>
+          <input type="text" id="fc" value="5k" inputmode="decimal">
+          <p class="hint" id="fcHint"></p>
+        </div>
+        <div id="bpFields" hidden>
+          <div class="row2">
+            <div class="field" id="f-f0"><label for="f0">f₀ centrale</label><input type="text" id="f0" value="1k" inputmode="decimal"></div>
+            <div class="field" id="f-df"><label for="df">Bande Δf (−3 dB)</label><input type="text" id="df" value="200" inputmode="decimal"></div>
+          </div>
+          <p class="hint" id="bpHint"></p>
+          <div class="field" id="f-bpReal" style="margin-top:10px">
+            <label for="bpReal">Cellules (ordre 4)</label>
+            <select id="bpReal">
+              <option value="auto">Automatique (gain proche de 0 dB)</option>
+              <option value="bp">2 cellules passe-bande</option>
+              <option value="hplp">Passe-haut + passe-bas</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Composants</legend>
+        <div class="row2">
+          <div class="field">
+            <label for="rSer">Série R</label>
+            <select id="rSer"><option>E6</option><option selected>E12</option><option>E24</option><option>E96</option></select>
+          </div>
+          <div class="field">
+            <label for="cSer">Série C</label>
+            <select id="cSer"><option>E6</option><option selected>E12</option><option>E24</option></select>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field" id="f-rMin"><label for="rMin">R min</label><input type="text" id="rMin" value="1k"></div>
+          <div class="field" id="f-rMax"><label for="rMax">R max</label><input type="text" id="rMax" value="1M"></div>
+        </div>
+        <div class="row2">
+          <div class="field" id="f-cMin"><label for="cMin">C min</label><input type="text" id="cMin" value="100p"></div>
+          <div class="field" id="f-cMax"><label for="cMax">C max</label><input type="text" id="cMax" value="1µ"></div>
+        </div>
+        <p class="hint">Notation acceptée : 4k7, 4.7k, 3n3, 100n, 1u, 2.2e-9.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Tolérances</legend>
+        <div class="row2">
+          <div class="field" id="f-tolR"><label for="tolR">R ± (%)</label><input type="text" id="tolR" value="1" inputmode="decimal"></div>
+          <div class="field" id="f-tolC"><label for="tolC">C ± (%)</label><input type="text" id="tolC" value="5" inputmode="decimal"></div>
+        </div>
+        <label class="check"><input type="checkbox" id="mc" checked><span>Afficher la dispersion sur le tracé de gain</span></label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Amplificateur opérationnel</legend>
+        <label class="check"><input type="checkbox" id="opOn" checked><span>Modéliser l'AOP réel (GBW et marge de phase)</span></label>
+        <div class="row2" id="opFields">
+          <div class="field" id="f-gbw"><label for="gbw">GBW</label><input type="text" id="gbw" value="3M"></div>
+          <div class="field" id="f-pm"><label for="pm">Marge de phase (°)</label><input type="text" id="pm" value="60" inputmode="decimal"></div>
+        </div>
+        <div class="row2" id="opTolFields">
+          <div class="field" id="f-gbwTol"><label for="gbwTol">GBW ± (%)</label><input type="text" id="gbwTol" value="30" inputmode="decimal"></div>
+          <div class="field" id="f-pmTol"><label for="pmTol">Marge ± (°)</label><input type="text" id="pmTol" value="10" inputmode="decimal"></div>
+        </div>
+        <p class="hint">Ordres de grandeur : TL072 ≈ 3 MHz, NE5532 ≈ 10 MHz, LM358 ≈ 1 MHz. Marge de phase de l'AOP monté en suiveur. La dispersion est tirée indépendamment pour chaque AOP du filtre.</p>
+      </fieldset>
+    </form>
+
+    <main class="results">
+      <div class="alerts" id="alerts" aria-live="polite"></div>
+      <section class="kpis" id="kpis" aria-label="Synthèse"></section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Schéma</h2>
+          <span class="legend">Survolez une ligne de la nomenclature pour repérer le composant.</span>
+        </div>
+        <div class="schem-wrap"><div id="schem"></div></div>
+        <p class="note">AOP supposés idéaux, montés en suiveur (gain unitaire). Alimentations et condensateurs de découplage non représentés.</p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Réponse en fréquence</h2>
+          <div class="legend" id="legend">
+            <span><i></i><span id="legReal">Composants retenus</span></span>
+            <span><i class="ideal"></i>Filtre idéal</span>
+            <span id="legBand"><i class="band"></i>Dispersion</span>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="seg" role="radiogroup" aria-label="Vue">
+            <label><input type="radio" name="view" id="view-full" value="full" checked><span>Vue complète</span></label>
+            <label><input type="radio" name="view" id="view-zoom" value="zoom"><span>Zoom bande passante</span></label>
+          </div>
+        </div>
+        <div class="chart-host" id="chGain"></div>
+        <div class="chart-gap"></div>
+        <div class="toolbar">
+          <div class="seg" role="radiogroup" aria-label="Second tracé">
+            <label><input type="radio" name="tab" id="tab-phase" value="phase" checked><span>Phase</span></label>
+            <label><input type="radio" name="tab" id="tab-gd" value="gd"><span>Temps de propagation de groupe</span></label>
+          </div>
+        </div>
+        <div class="chart-host" id="ch2"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Tolérances et stabilité</h2>
+          <span class="legend" id="tolSub"></span>
+        </div>
+        <div class="tolgrid">
+          <div class="tolstats" id="tolStats"></div>
+          <div class="hist-wrap">
+            <div class="k-lbl">Répartition de f −3 dB (Monte-Carlo)</div>
+            <div class="chart-host" id="hist"></div>
+          </div>
+        </div>
+        <div class="verdict" id="verdict"></div>
+        <div class="tbl-wrap"><table id="tolCells"></table></div>
+        <p class="note">Plage « pire cas » : toutes les combinaisons de composants aux bornes de leur tolérance. Plage « 95 % » : 95 % des tirages Monte-Carlo, tolérances réparties uniformément. Chaque AOP reçoit son propre GBW et sa propre marge de phase, tirés dans leurs tolérances ; le pire cas ajoute deux situations, tous les AOP au plus lent et tous au plus rapide. Le ζ min est l'amortissement des pôles ajoutés par l'AOP dans chaque cellule : sous 0,3, la boucle de l'AOP sonne et devient sensible à une charge capacitive ou au câblage.</p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Cellules</h2></div>
+        <div class="tbl-wrap"><table id="cells"></table></div>
+        <h3>Fonction de transfert avec les composants retenus</h3>
+        <div class="tf" id="tf"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Nomenclature</h2>
+          <div class="btns">
+            <button type="button" id="btnReset" disabled>Rétablir les valeurs calculées</button>
+            <button type="button" id="btnCopy">Copier pour un tableur</button>
+          </div>
+        </div>
+        <div class="tbl-wrap"><table id="bom"></table></div>
+        <p class="note">Changez une valeur dans la colonne « Retenue » pour utiliser un composant de votre stock : les tracés et les écarts sont recalculés aussitôt.</p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Méthode</h2></div>
+        <div class="method">
+          <div>
+            <h3>Découpage en cellules</h3>
+            <p>Les pôles du prototype normalisé (Butterworth, Bessel ou Tchebychev) sont regroupés par paires conjuguées. Chaque paire devient une cellule Sallen-Key du 2ᵉ ordre caractérisée par f₀ et Q. Pour un ordre impair, le pôle réel restant donne une cellule RC suivie d'un suiveur. Les cellules sont rangées par Q croissant.</p>
+            <p>Pour Bessel et Butterworth, fc est la fréquence à −3 dB. Pour Tchebychev, vous choisissez −3 dB ou la fin de l'ondulation. En ordre pair, une chaîne à gain unitaire place le continu à 0 dB et l'ondulation au-dessus.</p>
+          </div>
+          <div>
+            <h3>Cellule passe-bas</h3>
+            <div class="formula">\[H(s)=\frac{1}{1+s\,C_g(R_a+R_b)+s^2R_aR_bC_fC_g}\]\[f_0=\frac{1}{2\pi\sqrt{R_aR_bC_fC_g}}\]\[Q=\frac{\sqrt{R_aR_bC_fC_g}}{C_g\,(R_a+R_b)}\]</div>
+            <p>Une solution existe seulement si \(C_f/C_g \ge 4Q^2\). Plus Q est élevé, plus l'écart entre les deux condensateurs est grand.</p>
+            <h3>Cellule passe-haut</h3>
+            <div class="formula">\[H(s)=\frac{s^2R_fR_gC_aC_b}{1+s\,R_f(C_a+C_b)+s^2R_fR_gC_aC_b}\]\[f_0=\frac{1}{2\pi\sqrt{R_fR_gC_aC_b}}\]\[Q=\frac{\sqrt{R_fR_gC_aC_b}}{R_f\,(C_a+C_b)}\]</div>
+            <h3>Cellule passe-bande</h3>
+            <div class="formula">\[H(s)=\frac{s\,R_gC_s/R_a}{G+s\left(\dfrac{R_gC_s}{R_a}+C_g+C_s\right)+s^2R_gC_sC_g}\]\[G=\frac{1}{R_a}+\frac{1}{R_f}\]\[f_0=\frac{1}{2\pi}\sqrt{\frac{G}{R_gC_sC_g}}\]\[H(j\omega_0)=\frac{R_gC_s/R_a}{R_gC_s/R_a+C_g+C_s}\]</div>
+            <p>Avec un suiveur, la cellule passe-bande perd du gain au centre. À condensateurs égaux, un gain de −6 dB demande \(R_a/R_f \approx 8Q^2\) : un Q élevé impose une grande dispersion des résistances. Les coupures à −3 dB se déduisent de f₀ et Δf par \(f_L f_H = f_0^2\) et \(f_H - f_L = \Delta f\), soit \(f_{L,H} = \tfrac{1}{2}\left(\sqrt{\Delta f^2 + 4f_0^2} \mp \Delta f\right)\). En ordre 2, la cellule a \(Q = f_0/\Delta f\). En ordre 4, le prototype d'ordre 2 est transformé en deux paires de pôles décalées, réalisées par deux cellules passe-bande ou par un passe-haut suivi d'un passe-bas : la forme est la même, seul le gain au centre change.</p>
+          </div>
+          <div>
+            <h3>Choix des valeurs</h3>
+            <p>Pour chaque cellule, le calculateur essaie toutes les paires de condensateurs de la série dans la plage donnée, puis toutes les résistances de la série. La seconde résistance est déduite de f₀ et arrondie aux deux valeurs normalisées voisines. La combinaison retenue minimise l'écart quadratique sur f₀ et sur Q, en préférant des résistances proches du milieu de la plage.</p>
+            <h3>Limites</h3>
+            <p>Le GBW conseillé suit la règle empirique \(\mathrm{GBW}\ge 100\,Q\,f_0\) (\(10\,f\) pour un suiveur seul). Au-delà d'environ 100 × fc, un passe-bas Sallen-Key réel remonte à cause de l'impédance de sortie de l'AOP. Cet effet n'est pas modélisé ici.</p>
+            <h3>Stabilité</h3>
+            <p>Avec un AOP idéal, une cellule Sallen-Key à gain unitaire est toujours stable : tous les coefficients du dénominateur sont positifs, quelles que soient les valeurs de R et C. Le risque vient de l'AOP. Le calculateur le modélise par deux pôles, \(A(s)=\dfrac{\omega_t}{s\,(1+s/\omega_{p2})}\) avec \(\omega_t=2\pi\,\mathrm{GBW}\) et \(\omega_{p2}=\omega_t\tan\varphi_m\) (marge de phase en suiveur), puis calcule les pôles de chaque cellule pour le cas nominal, les combinaisons extrêmes et les tirages Monte-Carlo.</p>
+            <div class="formula">\[H_{PB}(s)=\frac{1}{N(s)\,P(s)+R_aC_f\,s\,\bigl(P(s)-1\bigr)}\]\[N(s)=1+a_1s+a_2s^2\]\[P(s)=1+\frac{s}{\omega_t}+\frac{s^2}{\omega_t\,\omega_{p2}}\]</div>
+            <p>Un AOP décompensé (stable seulement à partir d'un gain de 5 ou 10) ne convient pas : monté en suiveur, il oscille. Une charge capacitive en sortie réduit aussi la marge de phase.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+const SKM = (() => {
+  'use strict';
+  const SQ = x => x * x;
+  const E = {
+    E6: [1.0, 1.5, 2.2, 3.3, 4.7, 6.8],
+    E12: [1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2],
+    E24: [1.0, 1.1, 1.2, 1.3, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.7, 3.0, 3.3, 3.6, 3.9, 4.3, 4.7, 5.1, 5.6, 6.2, 6.8, 7.5, 8.2, 9.1],
+    E96: [1.00, 1.02, 1.05, 1.07, 1.10, 1.13, 1.15, 1.18, 1.21, 1.24, 1.27, 1.30, 1.33, 1.37, 1.40, 1.43, 1.47, 1.50, 1.54, 1.58, 1.62, 1.65, 1.69, 1.74, 1.78, 1.82, 1.87, 1.91, 1.96, 2.00, 2.05, 2.10, 2.15, 2.21, 2.26, 2.32, 2.37, 2.43, 2.49, 2.55, 2.61, 2.67, 2.74, 2.80, 2.87, 2.94, 3.01, 3.09, 3.16, 3.24, 3.32, 3.40, 3.48, 3.57, 3.65, 3.74, 3.83, 3.92, 4.02, 4.12, 4.22, 4.32, 4.42, 4.53, 4.64, 4.75, 4.87, 4.99, 5.11, 5.23, 5.36, 5.49, 5.62, 5.76, 5.90, 6.04, 6.19, 6.34, 6.49, 6.65, 6.81, 6.98, 7.15, 7.32, 7.50, 7.68, 7.87, 8.06, 8.25, 8.45, 8.66, 8.87, 9.09, 9.31, 9.53, 9.76]
+  };
+  const FULL = {};
+  for (const k in E) {
+    const a = [];
+    for (let d = -13; d <= 8; d++) for (const b of E[k]) a.push(+(b * Math.pow(10, d)).toPrecision(4));
+    FULL[k] = a;
+  }
+  function bracket(name, v) {
+    const a = FULL[name];
+    if (v <= a[0]) return [a[0], a[0]];
+    if (v >= a[a.length - 1]) return [a[a.length - 1], a[a.length - 1]];
+    let lo = 0, hi = a.length - 1;
+    while (hi - lo > 1) { const m = (lo + hi) >> 1; if (a[m] <= v) lo = m; else hi = m; }
+    return [a[lo], a[hi]];
+  }
+  function nearestIndex(name, v) {
+    const a = FULL[name];
+    let bi = 0, bd = Infinity;
+    for (let i = 0; i < a.length; i++) { const d = Math.abs(Math.log(a[i] / v)); if (d < bd) { bd = d; bi = i; } }
+    return bi;
+  }
+  function neighbors(name, v, k) {
+    const a = FULL[name], i = nearestIndex(name, v);
+    return a.slice(Math.max(0, i - k), i + k + 1);
+  }
+  function range(name, min, max) { return FULL[name].filter(v => v >= min * (1 - 1e-9) && v <= max * (1 + 1e-9)); }
+
+  // ---------- prototype ----------
+  const cm = (a, b) => [a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0]];
+  const cd = (a, b) => { const d = b[0] * b[0] + b[1] * b[1]; return [(a[0] * b[0] + a[1] * b[1]) / d, (a[1] * b[0] - a[0] * b[1]) / d]; };
+  function roots(asc) {
+    const n = asc.length - 1, c = asc.map(x => x / asc[n]);
+    const R = Math.pow(Math.abs(c[0]), 1 / n) || 1;
+    const z = [];
+    for (let k = 0; k < n; k++) { const t = 2 * Math.PI * k / n + 0.4; z.push([R * Math.cos(t), R * Math.sin(t)]); }
+    for (let it = 0; it < 400; it++) {
+      let mv = 0, sc = 1e-300;
+      for (let i = 0; i < n; i++) {
+        let p = [1, 0];
+        for (let k = n - 1; k >= 0; k--) { p = cm(p, z[i]); p[0] += c[k]; }
+        let q = [1, 0];
+        for (let j = 0; j < n; j++) if (j !== i) q = cm(q, [z[i][0] - z[j][0], z[i][1] - z[j][1]]);
+        const dz = cd(p, q);
+        z[i] = [z[i][0] - dz[0], z[i][1] - dz[1]];
+        mv = Math.max(mv, Math.hypot(dz[0], dz[1]));
+        sc = Math.max(sc, Math.hypot(z[i][0], z[i][1]));
+      }
+      if (mv < 1e-13 * sc) break;
+    }
+    return z;
+  }
+  const fact = k => (k <= 1 ? 1 : k * fact(k - 1));
+
+  function prototype(approx, n, ripple, chebRef) {
+    let poles = [], eps = 0;
+    if (approx === 'butter') {
+      for (let k = 1; k <= n; k++) { const t = (2 * k - 1) * Math.PI / (2 * n); poles.push([-Math.sin(t), Math.cos(t)]); }
+    } else if (approx === 'cheb') {
+      eps = Math.sqrt(Math.pow(10, ripple / 10) - 1);
+      const a = Math.asinh(1 / eps) / n;
+      for (let k = 1; k <= n; k++) { const t = (2 * k - 1) * Math.PI / (2 * n); poles.push([-Math.sinh(a) * Math.sin(t), Math.cosh(a) * Math.cos(t)]); }
+    } else {
+      const asc = [];
+      for (let k = 0; k <= n; k++) asc.push(fact(2 * n - k) / (Math.pow(2, n - k) * fact(k) * fact(n - k)));
+      poles = roots(asc);
+    }
+    const secs = [];
+    for (const p of poles) {
+      const r = Math.hypot(p[0], p[1]);
+      if (Math.abs(p[1]) < 1e-7 * r) secs.push({ order: 1, w0: -p[0] });
+      else if (p[1] > 0) secs.push({ order: 2, w0: r, Q: r / (-2 * p[0]) });
+    }
+    const peak = (approx === 'cheb' && n % 2 === 0) ? Math.sqrt(1 + eps * eps) : 1;
+    const mag = w => secs.reduce((m, s) => s.order === 1 ? m / Math.hypot(1, w / s.w0)
+      : m / Math.hypot(1 - SQ(w / s.w0), w / (s.Q * s.w0)), 1);
+    const target = peak / Math.SQRT2;
+    let lo = 1e-3, hi = 100;
+    for (let i = 0; i < 200; i++) { const mid = Math.sqrt(lo * hi); if (mag(mid) >= target) lo = mid; else hi = mid; }
+    const w3 = Math.sqrt(lo * hi);
+    const scale = (approx === 'cheb' && chebRef === 'ripple') ? 1 : w3;
+    secs.forEach(s => { s.w0 /= scale; });
+    return { secs, peak, eps, w3n: w3 / scale };
+  }
+
+  // ---------- component search ----------
+  const L10 = Math.log10;
+  function searchLP(w0, Q, ctx) {
+    let best = null;
+    const need = 4 * Q * Q;
+    for (const Cg of ctx.Cs) for (const Cf of ctx.Cs) {
+      const ratio = Cf / Cg;
+      if (ratio < need * 0.6 || ratio > need * 40 + 10) continue;
+      const k = 1 / (w0 * w0 * Cf * Cg);
+      for (const Ra of ctx.Rs) {
+        const ex = k / Ra;
+        if (ex < ctx.rMin * 0.8 || ex > ctx.rMax * 1.25) continue;
+        for (const Rb of bracket(ctx.rSer, ex)) {
+          if (Rb < ctx.rMin * 0.9999 || Rb > ctx.rMax * 1.0001 || Rb > Ra) continue;
+          const a1 = Cg * (Ra + Rb), a2 = Ra * Rb * Cf * Cg;
+          const ef = 1 / Math.sqrt(a2) / w0 - 1, eq = Math.sqrt(a2) / a1 / Q - 1;
+          const cost = ef * ef + eq * eq + 2e-6 * (SQ(L10(Ra / ctx.rMid)) + SQ(L10(Rb / ctx.rMid))) + 1e-6 * L10(ratio);
+          if (!best || cost < best.cost) best = { cost, comps: { Ra, Rb, Cf, Cg } };
+        }
+      }
+    }
+    return best;
+  }
+  function searchHP(w0, Q, ctx) {
+    let best = null;
+    for (const Ca of ctx.Cs) for (const Cb of ctx.Cs) {
+      const ratio = Ca / Cb;
+      if (ratio < 0.2 || ratio > 5) continue;
+      const k = 1 / (w0 * w0 * Ca * Cb);
+      for (const Rf of ctx.Rs) {
+        const ex = k / Rf;
+        if (ex < ctx.rMin * 0.8 || ex > ctx.rMax * 1.25) continue;
+        for (const Rg of bracket(ctx.rSer, ex)) {
+          if (Rg < ctx.rMin * 0.9999 || Rg > ctx.rMax * 1.0001) continue;
+          const a1 = Rf * (Ca + Cb), a2 = Rf * Rg * Ca * Cb;
+          const ef = 1 / Math.sqrt(a2) / w0 - 1, eq = Math.sqrt(a2) / a1 / Q - 1;
+          const cost = ef * ef + eq * eq + 2e-6 * (SQ(L10(Rf / ctx.rMid)) + SQ(L10(Rg / ctx.rMid))) + 1e-6 * Math.abs(L10(ratio));
+          if (!best || cost < best.cost) best = { cost, comps: { Ca, Cb, Rf, Rg } };
+        }
+      }
+    }
+    return best;
+  }
+  function searchFO(w0, ctx) {
+    let best = null;
+    for (const C of ctx.Cs) {
+      const ex = 1 / (w0 * C);
+      if (ex < ctx.rMin * 0.8 || ex > ctx.rMax * 1.25) continue;
+      for (const R of bracket(ctx.rSer, ex)) {
+        if (R < ctx.rMin * 0.9999 || R > ctx.rMax * 1.0001) continue;
+        const ef = 1 / (R * C) / w0 - 1;
+        const cost = ef * ef + 2e-6 * SQ(L10(R / ctx.rMid));
+        if (!best || cost < best.cost) best = { cost, comps: { R, C } };
+      }
+    }
+    return best;
+  }
+
+  // Cellule Sallen-Key passe-bande à gain unitaire :
+  // Ra (Ve→A), Cg (A→0 V), Cs (A→B), Rg (B→0 V), Rf (A→Vs), suiveur sur B.
+  // H(s) = s·Rg·Cs/Ra / (G + s·(Rg·Cs/Ra + Cg + Cs) + s²·Rg·Cs·Cg), G = 1/Ra + 1/Rf
+  function bpCoef(c) {
+    const G = 1 / c.Ra + 1 / c.Rf;
+    return { a1: (c.Rg * c.Cs / c.Ra + c.Cg + c.Cs) / G, a2: c.Rg * c.Cs * c.Cg / G, b1: c.Rg * c.Cs / (c.Ra * G), K: c.Rg * c.Cs / (c.Rf * G) };
+  }
+  function bpExact(w0, Q, Ra, Cg, Cs) {
+    const d = w0 * Cg / Q - 1 / Ra;
+    if (d <= 0) return null;
+    const Rg = (Cg + Cs) / (Cs * d), gf = SQ(w0) * Rg * Cs * Cg - 1 / Ra;
+    if (gf <= 0) return null;
+    return { Rg, Rf: 1 / gf };
+  }
+  function searchBP(w0, Q, ctx) {
+    let best = null;
+    for (const Cg of ctx.Cs) for (const Cs of ctx.Cs) {
+      const ratio = Cg / Cs;
+      if (ratio < 0.2 || ratio > 5) continue;
+      for (const Ra of ctx.Rs) {
+        const ex = bpExact(w0, Q, Ra, Cg, Cs);
+        if (!ex || ex.Rg < ctx.rMin * 0.8 || ex.Rg > ctx.rMax * 1.25 || ex.Rf < ctx.rMin * 0.8 || ex.Rf > ctx.rMax * 1.25) continue;
+        for (const Rg of bracket(ctx.rSer, ex.Rg)) for (const Rf of bracket(ctx.rSer, ex.Rf)) {
+          if (Rg < ctx.rMin * 0.9999 || Rg > ctx.rMax * 1.0001 || Rf < ctx.rMin * 0.9999 || Rf > ctx.rMax * 1.0001) continue;
+          const k = bpCoef({ Ra, Rf, Rg, Cg, Cs });
+          const ef = 1 / Math.sqrt(k.a2) / w0 - 1, eq = Math.sqrt(k.a2) / k.a1 / Q - 1, h0 = k.b1 / k.a1;
+          const cost = ef * ef + eq * eq + 3e-4 * SQ(1 - h0) + 1e-6 * (SQ(L10(Ra / ctx.rMid)) + SQ(L10(Rg / ctx.rMid)) + SQ(L10(Rf / ctx.rMid))) + 1e-6 * Math.abs(L10(ratio));
+          if (!best || cost < best.cost) best = { cost, comps: { Ra, Cg, Cs, Rg, Rf } };
+        }
+      }
+    }
+    return best;
+  }
+  // Transformation passe-bas → passe-bande : chaque pôle p du prototype donne s² − p·B·s + ω0² = 0
+  function bpSections(approx, n, ripple, chebRef, fL, fH) {
+    const wL = 2 * Math.PI * fL, wH = 2 * Math.PI * fH, B = wH - wL, w0 = Math.sqrt(wL * wH);
+    if (n === 2) return [{ kind: 'bp', order: 2, w0, Q: w0 / B }];
+    const pr = prototype(approx, n / 2, ripple, chebRef);
+    const out = [];
+    for (const ps of pr.secs) {
+      const re = -ps.w0 / (2 * ps.Q), im = ps.w0 * Math.sqrt(Math.max(0, 1 - 1 / (4 * ps.Q * ps.Q)));
+      const pb = [re * B, im * B];
+      const disc = [pb[0] * pb[0] - pb[1] * pb[1] - 4 * w0 * w0, 2 * pb[0] * pb[1]];
+      const r = Math.hypot(disc[0], disc[1]), sq = [Math.sqrt((r + disc[0]) / 2), Math.sign(disc[1] || 1) * Math.sqrt((r - disc[0]) / 2)];
+      for (const sg of [1, -1]) {
+        const z = [(pb[0] + sg * sq[0]) / 2, (pb[1] + sg * sq[1]) / 2], mag = Math.hypot(z[0], z[1]);
+        out.push({ kind: 'bp', order: 2, w0: mag, Q: mag / (-2 * z[0]) });
+      }
+    }
+    out.sort((a, b) => a.w0 - b.w0);
+    return out;
+  }
+
+  function design(p) {
+    const ctx = {
+      Rs: range(p.rSer, p.rMin, p.rMax), Cs: range(p.cSer, p.cMin, p.cMax),
+      rSer: p.rSer, rMin: p.rMin, rMax: p.rMax, rMid: Math.sqrt(p.rMin * p.rMax)
+    };
+    let secs, peak = 1, bpInfo = null;
+    if (p.kind === 'bp') {
+      secs = bpSections(p.approx, p.n, p.ripple, p.chebRef, p.fL, p.fH);
+      if (secs.length === 2) {
+        // même forme (numérateur en s²), gain au centre différent selon la réalisation
+        const w0 = 2 * Math.PI * Math.sqrt(p.fL * p.fH);
+        const mag2 = (s, typ) => { const x = w0 / s.w0, d = Math.hypot(1 - x * x, x / s.Q); return (typ === 'hp' ? x * x : typ === 'bp' ? x / s.Q : 1) / d; };
+        const gBP = mag2(secs[0], 'bp') * mag2(secs[1], 'bp'), gHL = mag2(secs[0], 'hp') * mag2(secs[1], 'lp');
+        let used = p.bpReal === 'bp' || p.bpReal === 'hplp' ? p.bpReal : (Math.abs(L10(gBP)) <= Math.abs(L10(gHL)) ? 'bp' : 'hplp');
+        if (used === 'hplp') { secs[0].kind = 'hp'; secs[1].kind = 'lp'; }
+        bpInfo = { gBP, gHL, used, auto: !(p.bpReal === 'bp' || p.bpReal === 'hplp') };
+      }
+    } else {
+      const pr = prototype(p.approx, p.n, p.ripple, p.chebRef);
+      peak = pr.peak;
+      const wc = 2 * Math.PI * p.fc;
+      secs = pr.secs.map(s => ({ kind: p.kind, order: s.order, Q: s.Q, w0n: s.w0, w0: p.kind === 'lp' ? wc * s.w0 : wc / s.w0 }));
+      secs.sort((a, b) => (a.order - b.order) || (a.Q - b.Q));
+    }
+    for (const s of secs) {
+      const b = s.order === 1 ? searchFO(s.w0, ctx) : s.kind === 'lp' ? searchLP(s.w0, s.Q, ctx) : s.kind === 'hp' ? searchHP(s.w0, s.Q, ctx) : searchBP(s.w0, s.Q, ctx);
+      s.best = b ? { ...b.comps } : null;
+      s.comps = b ? { ...b.comps } : null;
+    }
+    return { p, proto: { peak }, secs, bpInfo };
+  }
+
+  // ---------- responses ----------
+  function realCoef(s, kind, c) {
+    kind = s.kind || kind;
+    c = c || s.comps;
+    if (s.order === 1) return { order: 1, a1: c.R * c.C, hp: kind === 'hp' };
+    if (kind === 'lp') return { order: 2, a1: c.Cg * (c.Ra + c.Rb), a2: c.Ra * c.Rb * c.Cf * c.Cg, hp: false };
+    if (kind === 'bp') { const k = bpCoef(c); return { order: 2, a1: k.a1, a2: k.a2, b1: k.b1, bp: true }; }
+    return { order: 2, a1: c.Rf * (c.Ca + c.Cb), a2: c.Rf * c.Rg * c.Ca * c.Cb, hp: true };
+  }
+  function idealCoef(s, kind) {
+    kind = s.kind || kind;
+    return s.order === 1 ? { order: 1, a1: 1 / s.w0, hp: kind === 'hp' }
+      : { order: 2, a1: 1 / (s.Q * s.w0), a2: 1 / SQ(s.w0), hp: kind === 'hp', bp: kind === 'bp', b1: 1 / (s.Q * s.w0) };
+  }
+  function coefParams(c) { return c.order === 1 ? { w0: 1 / c.a1 } : { w0: 1 / Math.sqrt(c.a2), Q: Math.sqrt(c.a2) / c.a1 }; }
+  function exactValues(s, kind) {
+    kind = s.kind || kind;
+    const c = s.comps;
+    if (s.order === 1) return { R: 1 / (s.w0 * c.C) };
+    if (kind === 'bp') { const ex = bpExact(s.w0, s.Q, c.Ra, c.Cg, c.Cs) || { Rg: NaN, Rf: NaN }; return { Ra: c.Ra, Rg: ex.Rg, Rf: ex.Rf }; }
+    if (kind === 'lp') {
+      const S = 1 / (s.Q * s.w0 * c.Cg), P = 1 / (SQ(s.w0) * c.Cf * c.Cg), D = S * S - 4 * P;
+      if (D < 0) return { Ra: NaN, Rb: NaN };
+      const r1 = (S + Math.sqrt(D)) / 2, r2 = (S - Math.sqrt(D)) / 2;
+      return c.Ra >= c.Rb ? { Ra: r1, Rb: r2 } : { Ra: r2, Rb: r1 };
+    }
+    const Rf = 1 / (s.w0 * s.Q * (c.Ca + c.Cb));
+    return { Rf, Rg: 1 / (SQ(s.w0) * Rf * c.Ca * c.Cb) };
+  }
+  function resp(cs, w) {
+    let mag = 1, ph = 0, gd = 0;
+    for (const c of cs) {
+      if (c.order === 1) {
+        const x = c.a1 * w;
+        mag *= (c.hp ? x : 1) / Math.hypot(1, x);
+        ph += (c.hp ? Math.PI / 2 : 0) - Math.atan(x);
+        gd += c.a1 / (1 + x * x);
+      } else {
+        const re = 1 - c.a2 * w * w, im = c.a1 * w, d2 = re * re + im * im;
+        mag *= (c.hp ? c.a2 * w * w : 1) / Math.sqrt(d2);
+        ph += (c.hp ? Math.PI : 0) - Math.atan2(im, re);
+        gd += c.a1 * (1 + c.a2 * w * w) / d2;
+      }
+    }
+    return { mag, ph, gd };
+  }
+  function grid(fmin, fmax, N) {
+    const a = new Float64Array(N), l0 = L10(fmin), l1 = L10(fmax);
+    for (let i = 0; i < N; i++) a[i] = Math.pow(10, l0 + (l1 - l0) * i / (N - 1));
+    return a;
+  }
+  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+  // ---------- op-amp model & polynomial cells ----------
+  // AOP à deux pôles : A(s) = ωt / (s (1 + s/ωp2)), ωp2 = ωt·tan(marge de phase en suiveur).
+  // Suiveur : Vo = V+/P(s), P = 1 + τs + τ·τ2·s².
+  function opModel(op) {
+    if (!op || !op.on) return null;
+    const wt = 2 * Math.PI * op.gbw, wp2 = wt * Math.tan(Math.min(op.pm, 89.9) * Math.PI / 180);
+    return { tau: 1 / wt, tau2: 1 / wp2 };
+  }
+  function polyMul(a, b) { const r = new Array(a.length + b.length - 1).fill(0); for (let i = 0; i < a.length; i++) for (let j = 0; j < b.length; j++) r[i + j] += a[i] * b[j]; return r; }
+  function polyAdd(a, b) { const r = new Array(Math.max(a.length, b.length)).fill(0); a.forEach((v, i) => { r[i] += v; }); b.forEach((v, i) => { r[i] += v; }); return r; }
+  // Ideal op amp: H = num/den.  Real op amp (LP) : H = 1 / (N·P + Ra·Cf·s·(P−1)) ; (HP) : a2 s² / (N·P + Rg·Cb·s·(P−1)).
+  function cellPoly(s, kind, c, om) {
+    kind = s.kind || kind;
+    let num, den, K = 0;
+    if (s.order === 1) { const a1 = c.R * c.C; num = kind === 'hp' ? [0, a1] : [1]; den = [1, a1]; }
+    else if (kind === 'lp') { const a1 = c.Cg * (c.Ra + c.Rb), a2 = c.Ra * c.Rb * c.Cf * c.Cg; num = [1]; den = [1, a1, a2]; K = c.Ra * c.Cf; }
+    else if (kind === 'bp') { const k = bpCoef(c); num = [0, k.b1]; den = [1, k.a1, k.a2]; K = k.K; }
+    else { const a1 = c.Rf * (c.Ca + c.Cb), a2 = c.Rf * c.Rg * c.Ca * c.Cb; num = [0, 0, a2]; den = [1, a1, a2]; K = c.Rg * c.Cb; }
+    if (om) {
+      den = polyMul(den, [1, om.tau, om.tau * om.tau2]);
+      if (K) den = polyAdd(den, [0, 0, K * om.tau, K * om.tau * om.tau2]);
+    }
+    return { num, den, order: s.order, w0: s.w0 };
+  }
+  function idealPoly(s, kind) {
+    kind = s.kind || kind;
+    if (s.order === 1) { const a1 = 1 / s.w0; return { num: kind === 'hp' ? [0, a1] : [1], den: [1, a1], order: 1, w0: s.w0 }; }
+    const a1 = 1 / (s.Q * s.w0), a2 = 1 / SQ(s.w0);
+    return { num: kind === 'hp' ? [0, 0, a2] : kind === 'bp' ? [0, a1] : [1], den: [1, a1, a2], order: 2, w0: s.w0 };
+  }
+  function evalJ(p, w) { // p(jω), coefficients croissants
+    let re = 0, im = 0;
+    for (let k = p.length - 1; k >= 0; k--) { const nr = -im * w + p[k], ni = re * w; re = nr; im = ni; }
+    return [re, im];
+  }
+  function cellH(cp, w) { const n = evalJ(cp.num, w), d = evalJ(cp.den, w); const dd = d[0] * d[0] + d[1] * d[1]; return [(n[0] * d[0] + n[1] * d[1]) / dd, (n[1] * d[0] - n[0] * d[1]) / dd]; }
+  function magAt(cps, f) { const w = 2 * Math.PI * f; let m = 1; for (const cp of cps) { const h = cellH(cp, w); m *= Math.hypot(h[0], h[1]); } return m; }
+  function respGrid(cps, f) {
+    const N = f.length, dB = new Float64Array(N), ph = new Float64Array(N), gd = new Float64Array(N);
+    const cellPeak = cps.map(() => -Infinity);
+    const prev = cps.map(() => null), off = cps.map(() => 0);
+    for (let i = 0; i < N; i++) {
+      const w = 2 * Math.PI * f[i];
+      let m = 1, a = 0;
+      cps.forEach((cp, k) => {
+        const h = cellH(cp, w), mag = Math.hypot(h[0], h[1]);
+        let ang = Math.atan2(h[1], h[0]);
+        if (prev[k] !== null) { while (ang + off[k] - prev[k] > Math.PI) off[k] -= 2 * Math.PI; while (ang + off[k] - prev[k] < -Math.PI) off[k] += 2 * Math.PI; }
+        ang += off[k]; prev[k] = ang;
+        m *= mag; a += ang;
+        const db = 20 * L10(mag); if (db > cellPeak[k]) cellPeak[k] = db;
+      });
+      dB[i] = 20 * L10(m); ph[i] = a * 180 / Math.PI;
+    }
+    for (let i = 0; i < N; i++) {
+      const i0 = Math.max(0, i - 1), i1 = Math.min(N - 1, i + 1);
+      gd[i] = -(ph[i1] - ph[i0]) * Math.PI / 180 / (2 * Math.PI * (f[i1] - f[i0]));
+    }
+    return { dB, ph, gd, cellPeak };
+  }
+  function f3poly(cps, kind, ref, fArr) {
+    const target = ref / Math.SQRT2;
+    let a, b;
+    if (kind === 'lp') {
+      for (let i = 0; i < fArr.length; i++) if (magAt(cps, fArr[i]) < target) { if (i === 0) return NaN; a = fArr[i - 1]; b = fArr[i]; break; }
+    } else {
+      for (let i = 0; i < fArr.length; i++) if (magAt(cps, fArr[i]) >= target) { if (i === 0) return NaN; a = fArr[i - 1]; b = fArr[i]; break; }
+    }
+    if (a === undefined) return NaN;
+    for (let i = 0; i < 60; i++) {
+      const mid = Math.sqrt(a * b), above = magAt(cps, mid) >= target;
+      if (kind === 'lp') { if (above) a = mid; else b = mid; } else { if (above) b = mid; else a = mid; }
+    }
+    return Math.sqrt(a * b);
+  }
+  // Pôles d'une cellule : stabilité, f0/Q effectifs (paire dominante), amortissement des pôles parasites (boucle AOP)
+  function cellPoles(cp) {
+    const w0 = cp.w0, den = cp.den.map((v, k) => v * Math.pow(w0, k));
+    let n = den.length - 1;
+    while (n > 0 && Math.abs(den[n]) < 1e-18 * Math.abs(den[0])) n--;
+    const z = n >= 1 ? roots(den.slice(0, n + 1)) : [];
+    z.sort((p, q) => Math.hypot(p[0], p[1]) - Math.hypot(q[0], q[1]));
+    const stable = z.every(p => p[0] < -1e-9 * Math.hypot(p[0], p[1]));
+    let f0 = NaN, Q = NaN;
+    if (cp.order === 1 && z.length) f0 = Math.hypot(z[0][0], z[0][1]) * w0;
+    else if (z.length >= 2) {
+      const p1 = z[0], p2 = z[1], prod = p1[0] * p2[0] - p1[1] * p2[1], sum = p1[0] + p2[0];
+      f0 = Math.sqrt(Math.abs(prod)) * w0; Q = Math.sqrt(Math.abs(prod)) / (-sum);
+    }
+    let zeta = Infinity;
+    for (const p of z.slice(cp.order)) zeta = Math.min(zeta, -p[0] / Math.hypot(p[0], p[1]));
+    return { stable, w0Eff: f0, qEff: Q, zeta, maxRe: z.length ? Math.max(...z.map(p => p[0] / Math.hypot(p[0], p[1]))) : -1 };
+  }
+
+  // Front d'un gabarit : 'rise' = premier passage au-dessus de la cible en partant du bas (côté passe-haut),
+  // 'fall' = dernier point au-dessus de la cible en partant du haut (côté passe-bas).
+  function edgeIndex(dB, type, target) {
+    const N = dB.length;
+    if (type === 'rise') { for (let i = 0; i < N; i++) if (dB[i] >= target) return i === 0 ? -1 : i - 1; return -1; }
+    for (let i = N - 1; i >= 0; i--) if (dB[i] >= target) return i === N - 1 ? -1 : i;
+    return -1;
+  }
+  function edgeInterp(dB, f, type, target) {
+    const i = edgeIndex(dB, type, target);
+    if (i < 0) return NaN;
+    const u = (target - dB[i]) / (dB[i + 1] - dB[i]);
+    return Math.pow(10, L10(f[i]) + u * (L10(f[i + 1]) - L10(f[i])));
+  }
+  function edgePrecise(cps, dB, f, type, target) {
+    const i = edgeIndex(dB, type, target);
+    if (i < 0) return NaN;
+    let a = f[i], b = f[i + 1];
+    const tl = Math.pow(10, target / 20);
+    for (let k = 0; k < 60; k++) {
+      const mid = Math.sqrt(a * b), above = magAt(cps, mid) >= tl;
+      if (type === 'rise') { if (above) b = mid; else a = mid; } else { if (above) a = mid; else b = mid; }
+    }
+    return Math.sqrt(a * b);
+  }
+
+  function analyze(D, opt) {
+    const kind = D.p.kind, om = opModel(opt.op);
+    const fLo = kind === 'bp' ? D.p.fL : D.p.fc, fHi = kind === 'bp' ? D.p.fH : D.p.fc;
+    const N = kind === 'bp' ? 900 : 700;
+    const f = grid(fLo / 100, fHi * 100, N);
+    const types = kind === 'lp' ? ['fall'] : kind === 'hp' ? ['rise'] : ['rise', 'fall'];
+    const ip = D.secs.map(s => idealPoly(s, kind));
+    const rp = D.secs.map(s => cellPoly(s, kind, s.comps, om));
+    const I = respGrid(ip, f), Rr = respGrid(rp, f);
+    const out = { f, idB: I.dB, rdB: Rr.dB, iPh: I.ph, rPh: Rr.ph, iGd: I.gd, rGd: Rr.gd, opOn: !!om };
+    const maxOf = a => { let v = -Infinity; for (let i = 0; i < a.length; i++) if (a[i] > v) v = a[i]; return v; };
+    const D3 = 10 * L10(2), refI = maxOf(I.dB), refR = maxOf(Rr.dB);
+    out.ref = Math.pow(10, refI / 20); out.peakI = refI; out.peakR = refR;
+    out.edges = types.map(t => ({ type: t, i: edgePrecise(ip, I.dB, f, t, refI - D3), r: edgePrecise(rp, Rr.dB, f, t, refR - D3) }));
+    // passe-bande : courbes ramenées à 0 dB au maximum (le gain absolu au centre est donné à part)
+    const norm = kind === 'bp';
+    out.normalized = norm;
+    if (norm) for (let i = 0; i < N; i++) { I.dB[i] -= refI; Rr.dB[i] -= refR; }
+    out.f3i = out.edges[0].i; out.f3r = out.edges[0].r;
+    if (kind === 'bp') { const [a, b] = out.edges; out.bpNom = { i: { f0: Math.sqrt(a.i * b.i), bw: b.i - a.i }, r: { f0: Math.sqrt(a.r * b.r), bw: b.r - a.r } }; }
+    const bLo = kind === 'lp' ? 0 : out.edges[0].i, bHi = kind === 'hp' ? Infinity : out.edges[out.edges.length - 1].i;
+    let dev = 0;
+    for (let i = 0; i < N; i++) if (f[i] >= bLo && f[i] <= bHi) dev = Math.max(dev, Math.abs((Rr.dB[i] - (norm ? 0 : refR)) - (I.dB[i] - (norm ? 0 : refI))));
+    out.dev = dev;
+    out.coefs = D.secs.map(s => realCoef(s, kind));
+    out.secParams = out.coefs.map(coefParams);
+    out.cells = D.secs.map((s, k) => ({ ...out.secParams[k], ...cellPoles(rp[k]), peak: Rr.cellPeak[k] }));
+
+    // ----- tolérances : pire cas (combinaisons extrêmes) + Monte-Carlo -----
+    const keys = [];
+    D.secs.forEach((s, k) => { for (const key in s.comps) keys.push([k, key]); });
+    const nc = D.secs.length;
+    const tolOf = key => key[0] === 'R' ? opt.tolR : opt.tolC;
+    const lo = new Float64Array(N).fill(Infinity), hi = new Float64Array(N).fill(-Infinity), plo = new Float64Array(N).fill(Infinity), phi = new Float64Array(N).fill(-Infinity);
+    const cellStats = D.secs.map(() => ({ f0min: Infinity, f0max: -Infinity, Qmin: Infinity, Qmax: -Infinity, qEffMax: -Infinity, peakMax: -Infinity, zetaMin: Infinity, unstable: 0 }));
+    const T = { edges: types.map(t => ({ type: t, mc: [], wcMin: Infinity, wcMax: -Infinity })), unstable: 0, total: 0, unstableCorner: false };
+    // passe-bande : f0 = √(fL·fH) et Δf = fH − fL, suivis tirage par tirage
+    T.bp = kind === 'bp' ? [{ key: 'f0', mc: [], wcMin: Infinity, wcMax: -Infinity }, { key: 'bw', mc: [], wcMin: Infinity, wcMax: -Infinity }] : null;
+    const bpPush = (fx, corner) => {
+      if (!T.bp || !(isFinite(fx[0]) && isFinite(fx[1]))) return;
+      [Math.sqrt(fx[0] * fx[1]), fx[1] - fx[0]].forEach((v, j) => { const E = T.bp[j]; if (corner) { E.wcMin = Math.min(E.wcMin, v); E.wcMax = Math.max(E.wcMax, v); } else E.mc.push(v); });
+    };
+    const tmpComps = D.secs.map(s => ({ ...s.comps }));
+    // dispersion propre à chaque AOP (un AOP par cellule)
+    const opOn = !!om, gTol = opOn ? (opt.op.gbwTol || 0) : 0, pTol = opOn ? (opt.op.pmTol || 0) : 0;
+    const tmpOps = D.secs.map(() => om);
+    const opAt = (g, pmv) => opModel({ on: true, gbw: opt.op.gbw * g, pm: Math.max(1, Math.min(89.9, opt.op.pm + pmv)) });
+    function evalSample(isCorner, band) {
+      const cps = D.secs.map((s, k) => cellPoly(s, kind, tmpComps[k], tmpOps[k]));
+      const G = respGrid(cps, f);
+      const mx = maxOf(G.dB), off = norm ? mx : 0;
+      if (band) for (let i = 0; i < N; i++) { const v = G.dB[i] - off, ph = G.ph[i]; if (v < lo[i]) lo[i] = v; if (v > hi[i]) hi[i] = v; if (ph < plo[i]) plo[i] = ph; if (ph > phi[i]) phi[i] = ph; }
+      const tg = mx - D3, fx = types.map(t => edgeInterp(G.dB, f, t, tg));
+      let stable = true;
+      D.secs.forEach((s, k) => {
+        const cs = cellStats[k], cpar = coefParams(realCoef(s, kind, tmpComps[k])), pl = cellPoles(cps[k]);
+        cs.f0min = Math.min(cs.f0min, cpar.w0); cs.f0max = Math.max(cs.f0max, cpar.w0);
+        if (s.order === 2) { cs.Qmin = Math.min(cs.Qmin, cpar.Q); cs.Qmax = Math.max(cs.Qmax, cpar.Q); if (isFinite(pl.qEff)) cs.qEffMax = Math.max(cs.qEffMax, pl.qEff); }
+        cs.peakMax = Math.max(cs.peakMax, G.cellPeak[k]);
+        cs.zetaMin = Math.min(cs.zetaMin, pl.zeta);
+        if (!pl.stable) { stable = false; cs.unstable++; }
+      });
+      T.total++;
+      if (!stable) { T.unstable++; if (isCorner) T.unstableCorner = true; }
+      return fx;
+    }
+    // pire cas : toutes les combinaisons ±tolérance (jusqu'à 10 composants → 1024 cas)
+    const nk = keys.length;
+    // bit supplémentaire : tous les AOP au plus lent (GBW et marge mini) ou au plus rapide
+    const opBit = opOn && (gTol > 0 || pTol > 0) ? 1 : 0;
+    if (nk <= 12) {
+      for (let mask = 0; mask < (1 << (nk + opBit)); mask++) {
+        keys.forEach(([k, key], j) => { tmpComps[k][key] = D.secs[k].comps[key] * (1 + ((mask >> j) & 1 ? 1 : -1) * tolOf(key)); });
+        if (opBit) { const sg = (mask >> nk) & 1 ? 1 : -1, o = opAt(1 + sg * gTol, sg * pTol); tmpOps.fill(o); }
+        const fx = evalSample(true, true);
+        fx.forEach((v, j) => { if (isFinite(v)) { const E = T.edges[j]; E.wcMin = Math.min(E.wcMin, v); E.wcMax = Math.max(E.wcMax, v); } });
+        bpPush(fx, true);
+      }
+      T.corners = 1 << (nk + opBit);
+    }
+    const rnd = mulberry32(20261106), M = opt.samples || 400;
+    for (let m = 0; m < M; m++) {
+      keys.forEach(([k, key]) => { tmpComps[k][key] = D.secs[k].comps[key] * (1 + tolOf(key) * (2 * rnd() - 1)); });
+      if (opOn) for (let k = 0; k < tmpOps.length; k++) tmpOps[k] = opAt(1 + gTol * (2 * rnd() - 1), pTol * (2 * rnd() - 1));
+      const fx = evalSample(false, true);
+      fx.forEach((v, j) => { if (isFinite(v)) T.edges[j].mc.push(v); });
+      bpPush(fx, false);
+    }
+    for (const E of T.edges.concat(T.bp || [])) {
+      E.mc.sort((a, b) => a - b);
+      const q = p => E.mc.length ? E.mc[Math.min(E.mc.length - 1, Math.max(0, Math.round(p * (E.mc.length - 1))))] : NaN;
+      E.p025 = q(0.025); E.p975 = q(0.975);
+      if (!T.corners) { E.wcMin = NaN; E.wcMax = NaN; }
+    }
+    T.samples = M;
+    T.cells = cellStats;
+    out.tol = T;
+    out.mc = { lo, hi, plo, phi, samples: M };
+    out.nc = nc;
+    return out;
+  }
+
+  return { E, FULL, bracket, neighbors, range, prototype, design, realCoef, idealCoef, coefParams, exactValues, analyze, grid, cellPoly, cellPoles, opModel };
+})();
+
+</script>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const L10 = Math.log10;
+  const state = { D: null, an: null, view: 'full', tab: 'phase', opt: null };
+  const STORE = 'sk-calc-v1';
+
+  // ---------- formatting ----------
+  const PREF = [[1e6, 'M'], [1e3, 'k'], [1, ''], [1e-3, 'm'], [1e-6, 'µ'], [1e-9, 'n'], [1e-12, 'p']];
+  function engParts(v) {
+    const a = Math.abs(v);
+    for (const [m, p] of PREF) if (a >= m * 0.9995) return [v / m, p];
+    return [v / 1e-12, 'p'];
+  }
+  const num = (x, sig = 3) => isFinite(x) ? Number(x.toPrecision(sig)).toString().replace('.', ',').replace('-', '−') : '—';
+  const eng = (v, unit, sig = 3) => { if (!isFinite(v)) return '—'; const [m, p] = engParts(v); return num(m, sig) + ' ' + p + unit; };
+  function rkm(v, kind) {
+    const [m, p] = engParts(v);
+    const s = Number(m.toPrecision(3)).toString();
+    if (p === '' && kind === 'R') return s.includes('.') ? s.replace('.', 'R') : s;
+    return s.includes('.') ? s.replace('.', p) : s + p;
+  }
+  const pct = (e, d = 1) => isFinite(e) ? ((e >= 0 ? '+' : '−') + Math.abs(e * 100).toFixed(d).replace('.', ',') + ' %') : '—';
+  function chip(e, thr = [0.01, 0.03]) {
+    if (!isFinite(e)) return '<span class="chip bad">—</span>';
+    const a = Math.abs(e), c = a < thr[0] ? 'ok' : a < thr[1] ? 'warn' : 'bad';
+    return `<span class="chip ${c}">${pct(e)}</span>`;
+  }
+  const SUP = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+  function sci(v) {
+    const e = Math.floor(L10(Math.abs(v))), m = v / Math.pow(10, e);
+    return m.toFixed(4).replace('.', ',') + '·10' + String(e).split('').map(c => SUP[c]).join('');
+  }
+  function parseEng(str) {
+    if (str == null) return NaN;
+    let s = String(str).trim().replace(/\s+/g, '').replace(',', '.').replace(/hz$/i, '').replace(/(Ω|ohms?)$/i, '').replace(/F$/, '');
+    if (!s) return NaN;
+    const mult = { p: 1e-12, n: 1e-9, u: 1e-6, 'µ': 1e-6, 'μ': 1e-6, m: 1e-3, k: 1e3, K: 1e3, M: 1e6, G: 1e9, R: 1, r: 1 };
+    let m = s.match(/^(\d+)([pnuµμmkKMGRr])(\d+)$/);
+    if (m) return parseFloat(m[1] + '.' + m[3]) * mult[m[2]];
+    m = s.match(/^(\d*\.?\d+(?:[eE][-+]?\d+)?)([pnuµμmkKMGRr]?)$/);
+    if (m) return parseFloat(m[1]) * (m[2] ? mult[m[2]] : 1);
+    return NaN;
+  }
+  const parseNum = s => parseFloat(String(s).trim().replace(',', '.'));
+  const APPROX = { butter: 'Butterworth', bessel: 'Bessel', cheb: 'Tchebychev' };
+
+  // ---------- params ----------
+  const FIELDS = ['approx', 'ripple', 'chebRef', 'fc', 'rSer', 'cSer', 'rMin', 'rMax', 'cMin', 'cMax', 'tolR', 'tolC', 'gbw', 'pm', 'gbwTol', 'pmTol', 'f0', 'df', 'bpReal'];
+  function radio(name) { const el = document.querySelector(`input[name="${name}"]:checked`); return el ? el.value : null; }
+  function setRadio(name, v) { const el = document.querySelector(`input[name="${name}"][value="${v}"]`); if (el) el.checked = true; }
+  function save() {
+    try {
+      const o = { kind: radio('kind'), order: radio('order'), mc: $('mc').checked, opOn: $('opOn').checked };
+      FIELDS.forEach(k => { o[k] = $(k).value; });
+      localStorage.setItem(STORE, JSON.stringify(o));
+    } catch (e) { /* stockage indisponible */ }
+  }
+  function restore() {
+    try {
+      const o = JSON.parse(localStorage.getItem(STORE) || 'null');
+      if (!o) return;
+      FIELDS.forEach(k => { if (o[k] != null) $(k).value = o[k]; });
+      if (o.kind) setRadio('kind', o.kind);
+      if (o.order) setRadio('order', o.order);
+      if (typeof o.mc === 'boolean') $('mc').checked = o.mc;
+      if (typeof o.opOn === 'boolean') $('opOn').checked = o.opOn;
+    } catch (e) { /* ignore */ }
+  }
+
+  function setFieldErr(id, msg) {
+    const f = $('f-' + id);
+    if (!f) return;
+    f.classList.toggle('bad', !!msg);
+    let h = f.querySelector('.hint.e');
+    if (msg) { if (!h) { h = document.createElement('p'); h.className = 'hint e'; f.appendChild(h); } h.textContent = msg; }
+    else if (h) h.remove();
+  }
+  function readParams() {
+    const errs = [];
+    const p = {
+      kind: radio('kind'), approx: $('approx').value, n: +radio('order'),
+      ripple: parseNum($('ripple').value), chebRef: $('chebRef').value,
+      fc: parseEng($('fc').value), f0: parseEng($('f0').value), df: parseEng($('df').value), rSer: $('rSer').value, cSer: $('cSer').value,
+      rMin: parseEng($('rMin').value), rMax: parseEng($('rMax').value),
+      cMin: parseEng($('cMin').value), cMax: parseEng($('cMax').value),
+      tolR: parseNum($('tolR').value) / 100, tolC: parseNum($('tolC').value) / 100, mc: $('mc').checked,
+      opOn: $('opOn').checked, gbw: parseEng($('gbw').value), pm: parseNum($('pm').value),
+      gbwTol: parseNum($('gbwTol').value) / 100, pmTol: parseNum($('pmTol').value)
+    };
+    $('gbw').disabled = $('pm').disabled = $('gbwTol').disabled = $('pmTol').disabled = !p.opOn;
+    $('chebFields').hidden = p.approx !== 'cheb';
+    const chk = (id, ok, msg) => { setFieldErr(id, ok ? '' : msg); if (!ok) errs.push(msg); };
+    const bp = p.kind === 'bp';
+    $('f-fc').hidden = bp; $('bpFields').hidden = !bp;
+    ['3', '5'].forEach(v => { const r = $('order-' + v); r.disabled = bp; r.parentElement.classList.toggle('off', bp); });
+    if (bp && p.n % 2) { p.n = 4; setRadio('order', '4'); }
+    p.bpReal = $('bpReal').value;
+    $('f-bpReal').hidden = !(bp && p.n === 4);
+    $('orderHint').textContent = bp ? (p.n === 2 ? 'Ordre 2 : une cellule Sallen-Key passe-bande. La réponse ne dépend que de f₀ et Q (le choix Butterworth, Bessel ou Tchebychev ne change rien).' : 'Ordre 4 : le prototype d\'ordre 2 choisi est transformé en deux cellules décalées autour de f₀.') : '';
+    $('orderHint').hidden = !bp;
+    if (bp) {
+      setFieldErr('fc', '');
+      chk('f0', isFinite(p.f0) && p.f0 > 0 && p.f0 < 1e8, 'Fréquence illisible : écrivez par exemple 1k ou 1000.');
+      chk('df', isFinite(p.df) && p.df > 0 && p.df < 20 * p.f0, 'Bande illisible ou trop large (Δf < 20·f₀).');
+      p.fL = (Math.sqrt(p.df * p.df + 4 * p.f0 * p.f0) - p.df) / 2; p.fH = p.fL + p.df;
+      p.fc = p.f0;
+      $('bpHint').textContent = isFinite(p.fL) && p.df > 0 ? `Coupures à −3 dB : ${eng(p.fL, 'Hz', 4)} et ${eng(p.fH, 'Hz', 4)} · Q = f₀/Δf = ${num(p.f0 / p.df, 3)}` : '';
+    } else {
+      setFieldErr('f0', ''); setFieldErr('df', '');
+      chk('fc', isFinite(p.fc) && p.fc > 0 && p.fc < 1e8, 'Fréquence illisible : écrivez par exemple 5k ou 5000.');
+    }
+    $('fcHint').textContent = !bp && isFinite(p.fc) && p.fc > 0 ? '= ' + eng(p.fc, 'Hz', 4) : '';
+    if (p.approx === 'cheb') chk('ripple', isFinite(p.ripple) && p.ripple >= 0.01 && p.ripple <= 3, 'Ondulation entre 0,01 et 3 dB.');
+    else setFieldErr('ripple', '');
+    chk('rMin', isFinite(p.rMin) && p.rMin > 0, 'Valeur illisible.');
+    chk('rMax', isFinite(p.rMax) && p.rMax > p.rMin * 1.5, 'Doit dépasser R min.');
+    chk('cMin', isFinite(p.cMin) && p.cMin > 0, 'Valeur illisible.');
+    chk('cMax', isFinite(p.cMax) && p.cMax > p.cMin * 1.5, 'Doit dépasser C min.');
+    chk('tolR', isFinite(p.tolR) && p.tolR >= 0 && p.tolR <= 0.5, 'Entre 0 et 50 %.');
+    chk('tolC', isFinite(p.tolC) && p.tolC >= 0 && p.tolC <= 0.5, 'Entre 0 et 50 %.');
+    if (p.opOn) {
+      chk('gbw', isFinite(p.gbw) && p.gbw > 0, 'GBW illisible : écrivez par exemple 3M.');
+      chk('pm', isFinite(p.pm) && p.pm >= 5 && p.pm <= 89, 'Entre 5 et 89°.');
+      chk('gbwTol', isFinite(p.gbwTol) && p.gbwTol >= 0 && p.gbwTol <= 0.8, 'Entre 0 et 80 %.');
+      chk('pmTol', isFinite(p.pmTol) && p.pmTol >= 0 && p.pmTol < p.pm, 'Entre 0° et la marge nominale.');
+    } else { ['gbw', 'pm', 'gbwTol', 'pmTol'].forEach(k => setFieldErr(k, '')); }
+    return { p, errs };
+  }
+
+  // ---------- naming ----------
+  const KEYS = {
+    bp2: [['Ra', 'Résistance d\'entrée'], ['Cg', 'C vers 0 V'], ['Cs', 'Condensateur série'], ['Rg', 'R vers 0 V'], ['Rf', 'R de contre-réaction']],
+    lp2: [['Ra', 'Résistance d\'entrée'], ['Rb', 'Résistance série'], ['Cf', 'C de contre-réaction'], ['Cg', 'C vers 0 V']],
+    hp2: [['Ca', 'Condensateur d\'entrée'], ['Cb', 'Condensateur série'], ['Rf', 'R de contre-réaction'], ['Rg', 'R vers 0 V']],
+    lp1: [['R', 'Résistance série'], ['C', 'C vers 0 V']],
+    hp1: [['C', 'Condensateur série'], ['R', 'R vers 0 V']]
+  };
+  function assignRefs(D) {
+    let r = 0, c = 0;
+    D.secs.forEach((s, i) => {
+      s.refs = {};
+      s.keys = KEYS[s.kind + s.order];
+      for (const [k] of s.keys) s.refs[k] = k[0] === 'R' ? 'R' + (++r) : 'C' + (++c);
+      s.U = 'U' + (i + 1);
+    });
+  }
+
+  // ---------- schematic ----------
+  function buildSchematic(D) {
+    const kind = D.p.kind, L = 138;
+    let g = '';
+    const w = pts => `<polyline class="w" points="${pts.map(p => p.join(',')).join(' ')}"/>`;
+    const dot = (x, y) => `<circle class="dot" cx="${x}" cy="${y}" r="2.6"/>`;
+    const grp = (ref, inner) => `<g class="comp" data-ref="${ref}">${inner}</g>`;
+    function resH(cx, y, ref, val) {
+      return grp(ref, `<rect class="body" x="${cx - 22}" y="${y - 7.5}" width="44" height="15"/>` +
+        `<text class="val" x="${cx}" y="${y + 3.8}" text-anchor="middle">${val}</text>` +
+        `<text class="ref" x="${cx}" y="${y - 12}" text-anchor="middle">${ref}</text>`);
+    }
+    function resV(x, cy, ref, val) {
+      return grp(ref, `<rect class="body" x="${x - 7.5}" y="${cy - 22}" width="15" height="44"/>` +
+        `<text class="val" transform="translate(${x + 3.8},${cy}) rotate(-90)" text-anchor="middle">${val}</text>` +
+        `<text class="ref" x="${x - 13}" y="${cy + 4}" text-anchor="end">${ref}</text>`);
+    }
+    function capH(cx, y, ref, val) {
+      return grp(ref, `<line class="w" x1="${cx - 14}" y1="${y}" x2="${cx - 4}" y2="${y}"/><line class="w" x1="${cx + 4}" y1="${y}" x2="${cx + 14}" y2="${y}"/>` +
+        `<line class="plate" x1="${cx - 4}" y1="${y - 11}" x2="${cx - 4}" y2="${y + 11}"/><line class="plate" x1="${cx + 4}" y1="${y - 11}" x2="${cx + 4}" y2="${y + 11}"/>` +
+        `<text class="ref" x="${cx}" y="${y - 16}" text-anchor="middle">${ref}</text>` +
+        `<text class="val" x="${cx}" y="${y + 25}" text-anchor="middle">${val}</text>`);
+    }
+    function capV(x, cy, ref, val) {
+      return grp(ref, `<line class="w" x1="${x}" y1="${cy - 14}" x2="${x}" y2="${cy - 4}"/><line class="w" x1="${x}" y1="${cy + 4}" x2="${x}" y2="${cy + 14}"/>` +
+        `<line class="plate" x1="${x - 11}" y1="${cy - 4}" x2="${x + 11}" y2="${cy - 4}"/><line class="plate" x1="${x - 11}" y1="${cy + 4}" x2="${x + 11}" y2="${cy + 4}"/>` +
+        `<text class="ref" x="${x - 16}" y="${cy - 2}" text-anchor="end">${ref}</text>` +
+        `<text class="val" x="${x - 16}" y="${cy + 11}" text-anchor="end">${val}</text>`);
+    }
+    const gnd = (x, y) => `<line class="w" x1="${x - 10}" y1="${y}" x2="${x + 10}" y2="${y}"/><line class="w" x1="${x - 6}" y1="${y + 4}" x2="${x + 6}" y2="${y + 4}"/><line class="w" x1="${x - 2}" y1="${y + 8}" x2="${x + 2}" y2="${y + 8}"/>`;
+    function opamp(xi, ref) {
+      return `<polygon class="opamp" points="${xi},${L - 18} ${xi},${L + 42} ${xi + 60},${L + 12}"/>` +
+        `<text class="pin" x="${xi + 5}" y="${L + 4}">+</text><text class="pin" x="${xi + 6}" y="${L + 28}">−</text>` +
+        `<path class="face" d="M${xi + 13} ${L + 9} q2.5 -3.5 5 0 M${xi + 25} ${L + 9} q2.5 -3.5 5 0"/>` +
+        `<ellipse class="cheek" cx="${xi + 13}" cy="${L + 15}" rx="3" ry="1.9"/><ellipse class="cheek" cx="${xi + 30}" cy="${L + 15}" rx="3" ry="1.9"/>` +
+        `<path class="face" d="M${xi + 19} ${L + 15} q1.5 2 3 0 q1.5 2 3 0"/>` +
+        `<text class="ref" x="${xi + 4}" y="${L - 24}">${ref}</text>`;
+    }
+    const series = (cx, isR, ref, val) => isR ? resH(cx, L, ref, val) : capH(cx, L, ref, val);
+    const hwOf = isR => isR ? 22 : 14;
+    function follower(xi, U) {
+      const xo = xi + 84;
+      return {
+        xo, s: opamp(xi, U) + w([[xi + 60, L + 12], [xo, L + 12]]) +
+          w([[xi, L + 24], [xi - 12, L + 24], [xi - 12, L + 64], [xo, L + 64], [xo, L + 12]]) + dot(xo, L + 12)
+      };
+    }
+
+    let x = 44;
+    g += `<circle class="term" cx="22" cy="${L}" r="4"/><text class="ref" x="22" y="${L - 10}" text-anchor="middle">Ve</text>` + w([[26, L], [x, L]]);
+    const boxes = [];
+    D.secs.forEach((s, i) => {
+      const c = s.comps, x0 = x, R = s.refs, kTag = kind === 'bp' && s.kind !== 'bp' ? (s.kind === 'lp' ? ' · passe-bas' : ' · passe-haut') : '';
+      const v = k => rkm(c[k], k[0]);
+      let xo;
+      if (s.order === 2 && s.kind === 'bp') {
+        const c1 = x0 + 44, xA = x0 + 92, c2 = x0 + 134, xB = x0 + 180, xi = x0 + 212;
+        g += w([[x0, L], [c1 - 22, L]]) + resH(c1, L, R.Ra, v('Ra')) + w([[c1 + 22, L], [c2 - 14, L]]) + dot(xA, L);
+        g += capH(c2, L, R.Cs, v('Cs')) + w([[c2 + 14, L], [xi, L]]) + dot(xB, L);
+        const f = follower(xi, s.U); xo = f.xo; g += f.s;
+        const yT = L - 72, cx = (xA + xo) / 2;
+        g += w([[xA, L], [xA, yT], [cx - 22, yT]]) + resH(cx, yT, R.Rf, v('Rf')) + w([[cx + 22, yT], [xo, yT], [xo, L + 12]]);
+        const cy = L + 56;
+        g += w([[xA, L], [xA, cy - 14]]) + capV(xA, cy, R.Cg, v('Cg')) + w([[xA, cy + 14], [xA, L + 94]]) + gnd(xA, L + 94);
+        g += w([[xB, L], [xB, cy - 22]]) + resV(xB, cy, R.Rg, v('Rg')) + w([[xB, cy + 22], [xB, L + 94]]) + gnd(xB, L + 94);
+        boxes.push([x0 + 4, xo + 10, `Cellule ${i + 1} · passe-bande · f₀ ${eng(s.w0 / 2 / Math.PI, 'Hz')} · Q ${num(s.Q)}`]);
+      } else if (s.order === 2) {
+        const lp = s.kind === 'lp';
+        const k1 = lp ? 'Ra' : 'Ca', k2 = lp ? 'Rb' : 'Cb', kf = lp ? 'Cf' : 'Rf', kg = lp ? 'Cg' : 'Rg';
+        const sR = lp, hw = hwOf(sR);
+        const c1 = x0 + 44, xA = x0 + 92, c2 = x0 + 134, xB = x0 + 180, xi = x0 + 212;
+        g += w([[x0, L], [c1 - hw, L]]) + series(c1, sR, R[k1], v(k1)) + w([[c1 + hw, L], [c2 - hw, L]]) + dot(xA, L);
+        g += series(c2, sR, R[k2], v(k2)) + w([[c2 + hw, L], [xi, L]]) + dot(xB, L);
+        const f = follower(xi, s.U); xo = f.xo; g += f.s;
+        // feedback element on top wire
+        const yT = L - 72, cx = (xA + xo) / 2, hwf = hwOf(!sR);
+        g += w([[xA, L], [xA, yT], [cx - hwf, yT]]) + (sR ? capH(cx, yT, R[kf], v(kf)) : resH(cx, yT, R[kf], v(kf))) + w([[cx + hwf, yT], [xo, yT], [xo, L + 12]]);
+        // element to ground
+        const cy = L + 56;
+        g += w([[xB, L], [xB, cy - (sR ? 14 : 22)]]) + (sR ? capV(xB, cy, R[kg], v(kg)) : resV(xB, cy, R[kg], v(kg))) + w([[xB, cy + (sR ? 14 : 22)], [xB, L + 94]]) + gnd(xB, L + 94);
+        boxes.push([x0 + 4, xo + 10, `Cellule ${i + 1}${kTag} · f₀ ${eng(s.w0 / 2 / Math.PI, 'Hz')} · Q ${num(s.Q)}`]);
+      } else {
+        const lp = s.kind === 'lp';
+        const kS = lp ? 'R' : 'C', kG = lp ? 'C' : 'R';
+        const sR = lp, hw = hwOf(sR);
+        const c1 = x0 + 44, xN = x0 + 96, xi = x0 + 124;
+        g += w([[x0, L], [c1 - hw, L]]) + series(c1, sR, R[kS], v(kS)) + w([[c1 + hw, L], [xi, L]]) + dot(xN, L);
+        const f = follower(xi, s.U); xo = f.xo; g += f.s;
+        const cy = L + 56;
+        g += w([[xN, L], [xN, cy - (sR ? 14 : 22)]]) + (sR ? capV(xN, cy, R[kG], v(kG)) : resV(xN, cy, R[kG], v(kG))) + w([[xN, cy + (sR ? 14 : 22)], [xN, L + 94]]) + gnd(xN, L + 94);
+        boxes.push([x0 + 4, xo + 10, `Cellule ${i + 1}${kTag} · 1ᵉʳ ordre · f ${eng(s.w0 / 2 / Math.PI, 'Hz')}`]);
+      }
+      if (i < D.secs.length - 1) { g += w([[xo, L + 12], [xo + 20, L + 12], [xo + 20, L]]); x = xo + 20; }
+      else { g += w([[xo, L + 12], [xo + 34, L + 12]]) + `<circle class="term" cx="${xo + 38}" cy="${L + 12}" r="4"/><text class="ref" x="${xo + 38}" y="${L - 0}" text-anchor="middle">Vs</text>`; x = xo + 60; }
+    });
+    let bx = '';
+    for (const [a, b, label] of boxes) bx += `<rect class="box" x="${a}" y="${L - 104}" width="${b - a}" height="${214}"/><text class="boxlbl" x="${a + 6}" y="${L - 110}">${label}</text>`;
+    const W = x, H = L + 120;
+    return `<svg class="sv" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Schéma du filtre Sallen-Key">${bx}${g}</svg>`;
+  }
+
+  // ---------- charts ----------
+  let clipSeq = 0;
+  function niceStep(range, target) {
+    const raw = range / target, mag = Math.pow(10, Math.floor(L10(raw))), n = raw / mag;
+    return (n < 1.5 ? 1 : n < 3 ? 2 : n < 7 ? 5 : 10) * mag;
+  }
+  function ticks(min, max, target) {
+    const st = niceStep(max - min, target), out = [];
+    for (let v = Math.ceil(min / st - 1e-9) * st; v <= max + 1e-9 * st; v += st) out.push(+v.toPrecision(10));
+    return out;
+  }
+  function chart(host, o) {
+    host._o = o;
+    const W = Math.max(260, host.clientWidth), H = o.height;
+    const m = { l: 60, r: 14, t: 14, b: 32 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
+    const lx0 = L10(o.xMin), lx1 = L10(o.xMax), span = o.yMax - o.yMin;
+    const X = f => m.l + (L10(f) - lx0) / (lx1 - lx0) * pw;
+    const Y = v => m.t + (o.yMax - Math.max(o.yMin - span, Math.min(o.yMax + span, v))) / span * ph;
+    const id = 'clp' + (++clipSeq);
+    const f = o.f;
+    let i0 = 0, i1 = f.length - 1;
+    while (i0 < f.length - 1 && f[i0 + 1] < o.xMin) i0++;
+    while (i1 > 0 && f[i1 - 1] > o.xMax) i1--;
+    let s = `<defs><clipPath id="${id}"><rect x="${m.l}" y="${m.t}" width="${pw}" height="${ph}"/></clipPath></defs>`;
+    const dec = lx1 - lx0;
+    for (let d = Math.floor(lx0); d <= Math.ceil(lx1); d++) for (let k = 1; k <= 9; k++) {
+      const fv = k * Math.pow(10, d);
+      if (fv < o.xMin * 0.9999 || fv > o.xMax * 1.0001) continue;
+      const x = X(fv).toFixed(1);
+      s += `<line class="${k === 1 ? 'gl-major' : 'gl-minor'}" x1="${x}" x2="${x}" y1="${m.t}" y2="${m.t + ph}"/>`;
+      if (k === 1 || (dec <= 2.3 && (k === 2 || k === 5))) s += `<text class="ax" x="${x}" y="${H - 11}" text-anchor="middle">${eng(fv, 'Hz')}</text>`;
+    }
+    for (const v of o.yTicks) {
+      const y = Y(v).toFixed(1);
+      s += `<line class="gl-major" x1="${m.l}" x2="${m.l + pw}" y1="${y}" y2="${y}"/><text class="ax" x="${m.l - 7}" y="${+y + 4}" text-anchor="end">${o.yTick(v)}</text>`;
+    }
+    for (const mk of o.markers || []) {
+      if (mk.f < o.xMin || mk.f > o.xMax) continue;
+      const x = X(mk.f).toFixed(1);
+      s += `<line class="mk" x1="${x}" x2="${x}" y1="${m.t}" y2="${m.t + ph}"/><text class="mkl" x="${+x + 5}" y="${m.t + 13}">${mk.label}</text>`;
+    }
+    if (o.band) {
+      let d = '';
+      for (let i = i0; i <= i1; i++) d += (i === i0 ? 'M' : 'L') + X(f[i]).toFixed(1) + ',' + Y(o.band.hi[i]).toFixed(1);
+      for (let i = i1; i >= i0; i--) d += 'L' + X(f[i]).toFixed(1) + ',' + Y(o.band.lo[i]).toFixed(1);
+      s += `<path class="band" d="${d}Z" clip-path="url(#${id})"/>`;
+    }
+    for (const ser of o.series) {
+      let d = '';
+      for (let i = i0; i <= i1; i++) d += (i === i0 ? 'M' : 'L') + X(f[i]).toFixed(1) + ',' + Y(ser.y[i]).toFixed(1);
+      s += `<path class="${ser.cls}" d="${d}" clip-path="url(#${id})"/>`;
+    }
+    s += `<rect class="frame" x="${m.l}" y="${m.t}" width="${pw}" height="${ph}"/>`;
+    s += `<text class="axt" transform="translate(14,${m.t + ph / 2}) rotate(-90)" text-anchor="middle">${o.yTitle}</text>`;
+    s += `<line class="hov" x1="0" x2="0" y1="${m.t}" y2="${m.t + ph}" visibility="hidden"/>`;
+    o.series.forEach((ser, k) => { s += `<circle class="hd hd-${ser.key}" r="3.5" visibility="hidden" data-k="${k}"/>`; });
+    s += `<rect class="ov" x="${m.l}" y="${m.t}" width="${pw}" height="${ph}" fill="transparent"/>`;
+    host.innerHTML = `<svg class="chart" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.yTitle} en fonction de la fréquence">${s}</svg><div class="tip" hidden></div>`;
+    const svg = host.firstChild, tip = host.lastChild, hov = svg.querySelector('.hov'), dots = svg.querySelectorAll('.hd');
+    const hide = () => { tip.hidden = true; hov.setAttribute('visibility', 'hidden'); dots.forEach(d => d.setAttribute('visibility', 'hidden')); };
+    svg.querySelector('.ov').addEventListener('pointermove', ev => {
+      const r = svg.getBoundingClientRect(), px = ev.clientX - r.left;
+      const fx = Math.pow(10, lx0 + (px - m.l) / pw * (lx1 - lx0));
+      let lo = i0, hi = i1;
+      while (hi - lo > 1) { const md = (lo + hi) >> 1; if (f[md] < fx) lo = md; else hi = md; }
+      const i = Math.abs(L10(f[lo] / fx)) < Math.abs(L10(f[hi] / fx)) ? lo : hi;
+      const x = X(f[i]);
+      hov.setAttribute('x1', x); hov.setAttribute('x2', x); hov.setAttribute('visibility', 'visible');
+      let html = `<b>${eng(f[i], 'Hz', 4)}</b>`;
+      o.series.forEach((ser, k) => {
+        const y = Y(ser.y[i]);
+        const dd = dots[k];
+        dd.setAttribute('cx', x); dd.setAttribute('cy', y);
+        dd.setAttribute('visibility', y >= m.t && y <= m.t + ph ? 'visible' : 'hidden');
+        html += `<br><i style="background:var(${ser.key === 'ideal' ? '--accent' : '--trace'})"></i>${ser.label} ${o.yFmt(ser.y[i])}`;
+      });
+      if (o.band) html += `<br><i style="background:var(--band)"></i>Dispersion ${o.yFmt(o.band.lo[i])} … ${o.yFmt(o.band.hi[i])}`;
+      tip.innerHTML = html; tip.hidden = false;
+      const tw = tip.offsetWidth;
+      tip.style.left = (x + 14 + tw > W ? x - 14 - tw : x + 14) + 'px';
+    });
+    svg.querySelector('.ov').addEventListener('pointerleave', hide);
+  }
+
+  function drawCharts() {
+    const an = state.an, D = state.D;
+    if (!an) return;
+    const p = D.p, fc = p.fc, zoom = state.view === 'zoom', bp = p.kind === 'bp';
+    const fLo = bp ? p.fL : fc, fHi = bp ? p.fH : fc;
+    const xMin = zoom ? (p.kind === 'lp' ? fc / 10 : fLo / 3) : fLo / 100;
+    const xMax = zoom ? (p.kind === 'hp' ? fc * 10 : fHi * 3) : fHi * 100;
+    const inView = i => an.f[i] >= xMin && an.f[i] <= xMax;
+    const markers = bp ? [{ f: p.fL, label: '' }, { f: p.fH, label: '' }, { f: p.f0, label: 'f₀' }] : [{ f: fc, label: 'fc' }];
+    let yMin, yMax, yT;
+    if (zoom) {
+      let mx = -Infinity;
+      for (let i = 0; i < an.f.length; i++) if (inView(i)) { mx = Math.max(mx, an.rdB[i], an.idB[i], an.mc && p.mc ? an.mc.hi[i] : -Infinity); }
+      yMin = -6; yMax = Math.max(1, Math.ceil(mx + 0.4));
+      yT = ticks(yMin, yMax, 8);
+    } else {
+      const nn = bp ? p.n / 2 : p.n;
+      yMin = -40 * nn; yMax = 10;
+      yT = ticks(yMin, yMax, Math.min(11, nn * 2 + 2));
+    }
+    const band = p.mc && an.mc ? an.mc : null;
+    $('legBand').hidden = !band;
+    chart($('chGain'), {
+      f: an.f, xMin, xMax, yMin, yMax, yTicks: yT, height: 330, markers, band,
+      yTitle: 'Gain (dB)', yTick: v => num(v), yFmt: v => num(v, 3) + ' dB',
+      series: [{ key: 'real', cls: 's-real', label: 'Retenus', y: an.rdB }, { key: 'ideal', cls: 's-ideal', label: 'Idéal', y: an.idB }]
+    });
+    if (state.tab === 'phase') {
+      let lo = Infinity, hi = -Infinity;
+      for (let i = 0; i < an.f.length; i++) if (inView(i)) { lo = Math.min(lo, an.iPh[i], an.rPh[i]); hi = Math.max(hi, an.iPh[i], an.rPh[i]); }
+      const st = hi - lo > 300 ? 90 : 45;
+      const y0 = Math.floor(lo / st) * st, y1 = Math.ceil(hi / st) * st;
+      const tk = []; for (let v = y0; v <= y1; v += st) tk.push(v);
+      chart($('ch2'), {
+        f: an.f, xMin, xMax, yMin: y0, yMax: y1 === y0 ? y0 + st : y1, yTicks: tk, height: 250, markers,
+        yTitle: 'Phase (°)', yTick: v => num(v) + '°', yFmt: v => num(v, 4) + '°',
+        series: [{ key: 'real', cls: 's-real', label: 'Retenus', y: an.rPh }, { key: 'ideal', cls: 's-ideal', label: 'Idéal', y: an.iPh }]
+      });
+    } else {
+      let hi = 0;
+      for (let i = 0; i < an.f.length; i++) if (inView(i)) hi = Math.max(hi, an.iGd[i], an.rGd[i]);
+      const tk = ticks(0, hi * 1.08, 5), y1 = tk[tk.length - 1] >= hi ? tk[tk.length - 1] : hi * 1.1;
+      chart($('ch2'), {
+        f: an.f, xMin, xMax, yMin: 0, yMax: y1, yTicks: tk, height: 250, markers,
+        yTitle: 'Retard de groupe', yTick: v => eng(v, 's', 2), yFmt: v => eng(v, 's', 3),
+        series: [{ key: 'real', cls: 's-real', label: 'Retenus', y: an.rGd }, { key: 'ideal', cls: 's-ideal', label: 'Idéal', y: an.iGd }]
+      });
+    }
+    drawHist();
+  }
+
+  // Grandeurs suivies en tolérance : fc (passe-bas/haut) ou f0 et Δf (passe-bande)
+  function statList(an) {
+    const T = an.tol;
+    if (T.bp) return T.bp.map((E, j) => ({ ...E, label: j ? 'Bande passante Δf' : 'Fréquence centrale f₀', short: j ? 'Δf' : 'f₀', i: an.bpNom.i[E.key], r: an.bpNom.r[E.key] }));
+    return T.edges.map((E, j) => ({ ...E, label: 'Fréquence de coupure', short: 'f −3 dB', i: an.edges[j].i, r: an.edges[j].r }));
+  }
+  function drawHist() {
+    const an = state.an, host = $('hist');
+    if (!an || !an.tol) return;
+    const L = statList(an), multi = L.length > 1;
+    let html = '';
+    L.forEach((E, j) => {
+      const data = E.mc, ed = E;
+      if (!data.length) return;
+      const W = Math.max(260, host.clientWidth), H = multi ? 112 : 150, m = { l: 10, r: 10, t: 16, b: 26 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
+      const hasWc = isFinite(E.wcMin);
+      let a = Math.min(data[0], hasWc ? E.wcMin : Infinity, ed.i), b = Math.max(data[data.length - 1], hasWc ? E.wcMax : -Infinity, ed.i);
+      const pad = (b - a) * 0.06 || a * 0.01; a -= pad; b += pad;
+      const nb = 30, cnt = new Array(nb).fill(0);
+      for (const v of data) cnt[Math.min(nb - 1, Math.max(0, Math.floor((v - a) / (b - a) * nb)))]++;
+      const cmax = Math.max(...cnt), X = v => m.l + (v - a) / (b - a) * pw;
+      let s = '';
+      cnt.forEach((c, i) => { const h = c / cmax * ph; s += `<rect class="bar" rx="3" x="${(m.l + i * pw / nb + 0.5).toFixed(1)}" y="${(m.t + ph - h).toFixed(1)}" width="${(pw / nb - 1).toFixed(1)}" height="${h.toFixed(1)}"/>`; });
+      s += `<line class="gl-major" x1="${m.l}" x2="${m.l + pw}" y1="${m.t + ph}" y2="${m.t + ph}"/>`;
+      const lab = (v, cls, txt, anchor, y) => `<line class="${cls}" x1="${X(v).toFixed(1)}" x2="${X(v).toFixed(1)}" y1="${m.t - 4}" y2="${m.t + ph}"/>` + (txt ? `<text class="ax" x="${X(v).toFixed(1)}" y="${y}" text-anchor="${anchor}">${txt}</text>` : '');
+      if (hasWc) s += lab(E.wcMin, 'wc', eng(E.wcMin, 'Hz'), 'start', H - 8) + lab(E.wcMax, 'wc', eng(E.wcMax, 'Hz'), 'end', H - 8);
+      s += lab(ed.i, 'idl', '', 'middle', 0) + lab(ed.r, 'nom', 'nominale', 'middle', 10);
+      if (multi) html += `<div class="k-lbl" style="margin-top:${j ? 10 : 0}px">${E.label}</div>`;
+      html += `<svg class="chart hist" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Histogramme de la fréquence de coupure">${s}</svg>`;
+    });
+    host.innerHTML = html;
+  }
+
+  // ---------- render ----------
+  function renderCartouche(p) {
+    const items = [
+      ['Réponse', APPROX[p.approx] + (p.approx === 'cheb' && isFinite(p.ripple) ? ' ' + num(p.ripple) + ' dB' : '')],
+      ['Type', p.kind === 'lp' ? 'Passe-bas' : p.kind === 'hp' ? 'Passe-haut' : 'Passe-bande'],
+      ['Ordre', p.n + 'ᵉ · ' + (p.kind === 'bp' ? p.n / 2 : Math.ceil(p.n / 2)) + ' AOP'],
+      p.kind === 'bp' ? ['f₀ · Δf', isFinite(p.f0) && isFinite(p.df) ? eng(p.f0, 'Hz') + ' · ' + eng(p.df, 'Hz') : '—']
+        : ['fc', isFinite(p.fc) ? eng(p.fc, 'Hz') + (p.approx === 'cheb' && p.chebRef === 'ripple' ? ' (ond.)' : ' (−3 dB)') : '—'],
+      ['Résistances', p.rSer + ' · ' + (isFinite(p.rMin) ? eng(p.rMin, 'Ω', 2) : '?') + '–' + (isFinite(p.rMax) ? eng(p.rMax, 'Ω', 2) : '?')],
+      ['Condensateurs', p.cSer + ' · ' + (isFinite(p.cMin) ? eng(p.cMin, 'F', 2) : '?') + '–' + (isFinite(p.cMax) ? eng(p.cMax, 'F', 2) : '?')]
+    ];
+    $('cartouche').innerHTML = items.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+  }
+
+  function render() {
+    const D = state.D, an = state.an, p = D.p, alerts = [];
+    const missing = D.secs.map((s, i) => s.comps ? null : i + 1).filter(Boolean);
+    if (missing.length) {
+      alerts.push(['err', `<b>Aucune combinaison trouvée</b> pour la cellule ${missing.join(', ')} avec R entre ${eng(p.rMin, 'Ω')} et ${eng(p.rMax, 'Ω')} et C entre ${eng(p.cMin, 'F')} et ${eng(p.cMax, 'F')}. Élargissez les plages de composants.`]);
+      $('alerts').innerHTML = alerts.map(([c, t]) => `<div class="alert ${c}">${t}</div>`).join('');
+      ['kpis', 'schem', 'cells', 'bom', 'tf', 'chGain', 'ch2', 'tolStats', 'tolCells', 'verdict', 'hist'].forEach(id => { $(id).innerHTML = ''; });
+      return;
+    }
+    D.secs.forEach((s, i) => {
+      const sp = an.secParams[i];
+      if (s.order === 2 && s.Q > 5) alerts.push(['', `<b>Cellule ${i + 1} : Q = ${num(s.Q)}.</b> Une cellule à Q élevé est très sensible aux tolérances ; préférez des condensateurs à 1 ou 2 %.`]);
+      if (s.order === 2 && s.kind === 'lp' && s.comps.Cf / s.comps.Cg > 100) alerts.push(['', `<b>Cellule ${i + 1} :</b> rapport ${s.refs.Cf}/${s.refs.Cg} de ${num(s.comps.Cf / s.comps.Cg)}. C'est la contrepartie d'un Q élevé en gain unitaire.`]);
+      const ef = sp.w0 / s.w0 - 1;
+      if (Math.abs(ef) > 0.03) alerts.push(['', `<b>Cellule ${i + 1} :</b> f₀ décalée de ${pct(ef)} avec la série ${s.order === 1 ? p.rSer + '/' + p.cSer : p.rSer + '/' + p.cSer}. Une série plus fine (E24, E96) ou une plage plus large réduit l'écart.`]);
+    });
+    if (p.kind === 'bp') {
+      const gdb = an.peakR, bi = D.bpInfo;
+      if (gdb < -6) alerts.push(['', `<b>Gain au centre de bande : ${num(gdb, 3)} dB.</b> Une cellule passe-bande à gain unitaire perd du gain quand Q augmente${bi && bi.used === 'bp' ? ' ; la réalisation « passe-haut + passe-bas » donnerait ' + num(20 * Math.log10(bi.gHL), 3) + ' dB' : ''}. Prévoyez un étage de gain si besoin.`]);
+      if (gdb > 6) alerts.push(['', `<b>Gain au centre de bande : +${num(gdb, 3)} dB.</b> La réalisation passe-haut + passe-bas amplifie au centre d'une bande étroite : vérifiez l'amplitude de sortie${bi ? ' (deux cellules passe-bande donneraient ' + num(20 * Math.log10(bi.gBP), 3) + ' dB)' : ''}.`]);
+    }
+    if (p.kind !== 'bp' && p.approx === 'cheb' && p.n % 2 === 0) alerts.push(['info', `Tchebychev d'ordre pair : avec des cellules à gain unitaire, le gain en continu vaut 0 dB et l'ondulation monte jusqu'à +${num(p.ripple)} dB.`]);
+    $('alerts').innerHTML = alerts.map(([c, t]) => `<div class="alert ${c}">${t}</div>`).join('');
+
+    // stabilité & tolérances
+    const T = an.tol, gbwNeed = Math.max(...D.secs.map(s => s.order === 2 ? 100 * s.Q * s.w0 / 2 / Math.PI : 10 * s.w0 / 2 / Math.PI));
+    const nCases = T.total;
+    let zMin = Infinity, qEnh = 0, qEnhCell = 0, peakMax = -Infinity, peakCell = 0;
+    D.secs.forEach((s, i) => {
+      const cs = T.cells[i];
+      zMin = Math.min(zMin, cs.zetaMin);
+      if (s.order === 2 && isFinite(an.cells[i].qEff)) { const e = an.cells[i].qEff / an.secParams[i].Q - 1; if (e > qEnh) { qEnh = e; qEnhCell = i + 1; } }
+      if (cs.peakMax > peakMax) { peakMax = cs.peakMax; peakCell = i + 1; }
+    });
+    let vClass, vLabel, vText;
+    if (T.unstable > 0) {
+      vClass = 'bad'; vLabel = 'Instable';
+      vText = `Des pôles passent à droite de l'axe imaginaire dans ${T.unstable} cas sur ${nCases}. Le filtre peut osciller : prenez un AOP plus rapide ou mieux compensé.`;
+    } else if (!an.opOn) {
+      vClass = 'ok'; vLabel = 'Stable';
+      vText = `AOP idéal : chaque cellule est stable quelles que soient les valeurs de R et C, car tous les coefficients du dénominateur restent positifs. Activez le modèle d'AOP pour évaluer l'effet du GBW et de la marge de phase.`;
+    } else if (zMin < 0.3 || qEnh > 0.15) {
+      vClass = 'warn'; vLabel = 'Marge faible';
+      vText = `Stable dans les ${nCases} cas analysés, mais ` + [zMin < 0.3 ? `les pôles liés à l'AOP sont peu amortis (ζ min = ${num(zMin, 2)})` : '', qEnh > 0.15 ? `le GBW relève le Q de la cellule ${qEnhCell} de ${pct(qEnh, 0)}` : ''].filter(Boolean).join(' et ') + '. Un AOP plus rapide (≥ ' + eng(gbwNeed, 'Hz') + ') redonne de la marge.';
+    } else {
+      vClass = 'ok'; vLabel = 'Stable';
+      vText = `Stable dans les ${nCases} cas analysés (${T.corners ? T.corners + ' combinaisons extrêmes et ' : ''}${T.samples} tirages, dispersion de chacun des ${D.secs.length} AOP comprise). Amortissement minimal des pôles liés à l'AOP : ζ = ${num(zMin, 2)}. Q relevé au plus de ${pct(qEnh, 1)} par le GBW.`;
+    }
+    const extra = [];
+    if (peakMax > 6) extra.push(`La cellule ${peakCell} présente une surtension interne pouvant atteindre ${num(peakMax, 3)} dB : son signal de sortie dépasse celui d'entrée près de f₀. Vérifiez qu'elle ne sature pas avec l'amplitude maximale prévue.`);
+    if (an.opOn && D.p.gbw < gbwNeed) extra.push(`GBW saisi (${eng(D.p.gbw, 'Hz')}) inférieur au GBW conseillé (${eng(gbwNeed, 'Hz')}) : f₀ et Q s'écartent de la cible, comme le montre la courbe.`);
+    state.verdict = { label: vLabel, text: vText, extra, cls: vClass }; state.gbwNeed = gbwNeed;
+    $('verdict').innerHTML = `<span class="badge ${vClass}">${vLabel}</span><div><p>${vText}</p>${extra.map(t => `<p>${t}</p>`).join('')}</div>`;
+    if (T.unstable > 0) alerts.unshift(['err', `<b>Risque d'oscillation :</b> ${T.unstable} cas instables sur ${nCases}. Détail dans « Tolérances et stabilité ».`]);
+    else if (vClass === 'warn') alerts.push(['', `<b>Stabilité : marge faible.</b> Détail dans « Tolérances et stabilité ».`]);
+    $('alerts').innerHTML = alerts.map(([c, t]) => `<div class="alert ${c}">${t}</div>`).join('');
+
+    const tolTxt = `R ±${num(p.tolR * 100)} %, C ±${num(p.tolC * 100)} %`;
+    $('tolSub').textContent = tolTxt + (an.opOn ? ` · ${D.secs.length} AOP : ${eng(D.p.gbw, 'Hz')} ±${num(D.p.gbwTol * 100)} %, ${num(D.p.pm)}° ±${num(D.p.pmTol)}°` : ' · AOP idéal');
+    const SL = statList(an), multi = SL.length > 1;
+    $('tolStats').innerHTML = SL.map(E => {
+      const ed = E, nm = E.short, rel = v => pct(v / ed.r - 1);
+      return [
+        [nm + ' nominale', eng(ed.r, 'Hz', 4), `idéale ${eng(ed.i, 'Hz', 4)}`],
+        [nm + ' · 95 % des tirages', `${eng(E.p025, 'Hz')} – ${eng(E.p975, 'Hz')}`, `${rel(E.p025)} / ${rel(E.p975)}`],
+        [nm + ' · pire cas', isFinite(E.wcMin) ? `${eng(E.wcMin, 'Hz')} – ${eng(E.wcMax, 'Hz')}` : '—', isFinite(E.wcMin) ? `${rel(E.wcMin)} / ${rel(E.wcMax)}` : '']
+      ].map(([k, v, r]) => `<div class="tolstat"><span class="k">${k}</span><span class="v">${v}</span><span class="r">${r}</span></div>`).join('');
+    }).join('');
+
+    let th = `<thead><tr><th>Cellule</th><th class="num">f₀ min – max</th><th class="num">Q min – max</th><th class="num">Q avec AOP (max)</th><th class="num">Surtension max</th><th class="num">ζ min (AOP)</th><th>Verdict</th></tr></thead><tbody>`;
+    D.secs.forEach((s, i) => {
+      const cs = T.cells[i], f0 = s.w0 / 2 / Math.PI;
+      const f0r = `${eng(cs.f0min / 2 / Math.PI, 'Hz')} – ${eng(cs.f0max / 2 / Math.PI, 'Hz')}`;
+      const qr = s.order === 2 ? `${cs.Qmin.toFixed(2).replace('.', ',')} – ${cs.Qmax.toFixed(2).replace('.', ',')}` : '—';
+      const qe = s.order === 2 && an.opOn && isFinite(cs.qEffMax) ? cs.qEffMax.toFixed(2).replace('.', ',') : '—';
+      const z = an.opOn && isFinite(cs.zetaMin) ? num(cs.zetaMin, 2) : '—';
+      let v = ['ok', 'Stable'];
+      if (cs.unstable) v = ['bad', `Instable (${cs.unstable} cas)`];
+      else if (an.opOn && (cs.zetaMin < 0.3 || (s.order === 2 && an.cells[i].qEff / an.secParams[i].Q - 1 > 0.15))) v = ['warn', 'Marge faible'];
+      else if (cs.peakMax > 6) v = ['warn', 'Surtension'];
+      s._verdict = v[1];
+      th += `<tr><td>${i + 1} · ${s.U}</td><td class="num mono">${f0r}<br><span style="color:var(--muted)">${pct(cs.f0min / s.w0 - 1)} / ${pct(cs.f0max / s.w0 - 1)}</span></td>` +
+        `<td class="num mono">${qr}</td><td class="num mono">${qe}</td><td class="num mono">${num(cs.peakMax, 3)} dB</td><td class="num mono">${z}</td>` +
+        `<td><span class="chip ${v[0]}">${v[1]}</span></td></tr>`;
+    });
+    $('tolCells').innerHTML = th + '</tbody>';
+
+    // KPIs
+    const nR = D.secs.reduce((a, s) => a + s.keys.filter(k => k[0][0] === 'R').length, 0);
+    const nC = D.secs.reduce((a, s) => a + s.keys.filter(k => k[0][0] === 'C').length, 0);
+    const edTxt = (ed) => eng(ed.r, 'Hz');
+    const rangeTxt = E => isFinite(E.wcMin) ? `${eng(E.wcMin, 'Hz')} – ${eng(E.wcMax, 'Hz')}` : `${eng(E.p025, 'Hz')} – ${eng(E.p975, 'Hz')}`;
+    const kpi1 = multi
+      ? ['f₀ · Δf obtenus', `${eng(an.bpNom.r.f0, 'Hz')} · ${eng(an.bpNom.r.bw, 'Hz')}`, `visés ${eng(p.f0, 'Hz')} · ${eng(p.df, 'Hz')} · écarts ${pct(an.bpNom.r.f0 / p.f0 - 1)} / ${pct(an.bpNom.r.bw / p.df - 1)} · gain au centre ${num(an.peakR, 3)} dB`]
+      : ['f −3 dB obtenue', eng(an.f3r, 'Hz'), `idéale ${eng(an.f3i, 'Hz')} · écart ${pct(an.f3r / an.f3i - 1)} · ±${num(an.dev, 2)} dB en bande`];
+    const kpi2 = multi
+      ? ['f₀ et Δf (tolérances)', `<span style="font-size:17px">f₀ ${rangeTxt(SL[0])}<br>Δf ${rangeTxt(SL[1])}</span>`, isFinite(SL[0].wcMin) ? 'pire cas' : '95 % des tirages']
+      : ['Plage de fc (tolérances)', rangeTxt(T.edges[0]), isFinite(T.edges[0].wcMin) ? `pire cas · 95 % : ${eng(T.edges[0].p025, 'Hz')} – ${eng(T.edges[0].p975, 'Hz')}` : '95 % des tirages'];
+    $('kpis').innerHTML = [
+      kpi1, kpi2,
+      ['Stabilité', `<span class="chip ${vClass}" style="font-size:15px;padding:2px 8px">${vLabel}</span>`, an.opOn ? `ζ min ${num(zMin, 2)} · ${nCases} cas analysés` : 'AOP idéal'],
+      ['Matériel', `${D.secs.length} AOP · ${nR} R · ${nC} C`, `GBW conseillé ≥ ${eng(gbwNeed, 'Hz')}`]
+    ].map(([k, v, s]) => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+    $('legReal').textContent = an.opOn ? 'Composants retenus + AOP' : 'Composants retenus';
+
+    // schematic
+    $('schem').innerHTML = buildSchematic(D);
+
+    // cells table
+    let h = '<thead><tr><th>Cellule</th><th>Type</th><th>AOP</th><th class="num">f₀ cible</th><th class="num">f₀ obtenue</th><th class="num">Écart</th><th class="num">Q cible</th><th class="num">Q obtenu</th><th class="num">Écart</th><th class="num">GBW conseillé</th></tr></thead><tbody>';
+    D.secs.forEach((s, i) => {
+      const sp = an.secParams[i], f0 = s.w0 / 2 / Math.PI, f0r = sp.w0 / 2 / Math.PI;
+      const g2 = s.order === 2 ? 100 * s.Q * f0 : 10 * f0;
+      const tn = { lp: 'passe-bas', hp: 'passe-haut', bp: 'passe-bande' }[s.kind];
+      h += `<tr><td>${i + 1}</td><td>${s.order === 2 ? 'Sallen-Key ' + tn : 'RC ' + tn + ' + suiveur'}</td><td>${s.U}</td>` +
+        `<td class="num mono">${eng(f0, 'Hz', 4)}</td><td class="num mono">${eng(f0r, 'Hz', 4)}</td><td class="num">${chip(f0r / f0 - 1)}</td>` +
+        (s.order === 2 ? `<td class="num mono">${s.Q.toFixed(3).replace('.', ',')}</td><td class="num mono">${sp.Q.toFixed(3).replace('.', ',')}</td><td class="num">${chip(sp.Q / s.Q - 1)}</td>` : '<td class="num mono">—</td><td class="num mono">—</td><td class="num"></td>') +
+        `<td class="num mono">${eng(g2, 'Hz')}</td></tr>`;
+    });
+    $('cells').innerHTML = h + '</tbody>';
+
+    // transfer function (TeX)
+    const tex = v => { const ex = Math.floor(L10(Math.abs(v))), mm = v / Math.pow(10, ex); return mm.toFixed(4).replace('.', '{,}') + '\\cdot 10^{' + ex + '}'; };
+    const lines = an.coefs.map((c, i) => {
+      const den = c.order === 2 ? `1 + ${tex(c.a1)}\\,s + ${tex(c.a2)}\\,s^2` : `1 + ${tex(c.a1)}\\,s`;
+      const nm = c.bp ? `${tex(c.b1)}\\,s` : c.hp ? (c.order === 2 ? `${tex(c.a2)}\\,s^2` : `${tex(c.a1)}\\,s`) : '1';
+      return `H_{${i + 1}}(s) &= \\dfrac{${nm}}{${den}}`;
+    });
+    lines.push(`H(s) &= ${an.coefs.map((_, i) => 'H_{' + (i + 1) + '}(s)').join('\\cdot ')}`);
+    $('tf').innerHTML = '\\[\\begin{aligned}' + lines.join('\\\\[6pt]') + '\\end{aligned}\\]';
+    typeset($('tf'));
+
+    // BOM
+    let b = '<thead><tr><th>Repère</th><th>Cellule</th><th>Fonction</th><th class="num">Valeur calculée</th><th>Retenue</th><th class="num">Écart</th><th></th></tr></thead><tbody>';
+    let anyMod = false;
+    D.secs.forEach((s, i) => {
+      const ex = SKM.exactValues(s, p.kind);
+      for (const [k, role] of s.keys) {
+        const isR = k[0] === 'R', ser = isR ? p.rSer : p.cSer, val = s.comps[k];
+        const opts = SKM.neighbors(ser, val, 5).map(v => `<option value="${v}"${Math.abs(v / val - 1) < 1e-6 ? ' selected' : ''}>${eng(v, isR ? 'Ω' : 'F')}</option>`).join('');
+        const mod = Math.abs(val / s.best[k] - 1) > 1e-9;
+        anyMod = anyMod || mod;
+        const exv = isR ? ex[k] : NaN;
+        b += `<tr data-ref="${s.refs[k]}"><td class="mono"><b>${s.refs[k]}</b></td><td>${i + 1}</td><td>${role}</td>` +
+          `<td class="num mono">${isR ? eng(exv, 'Ω', 4) : '<span style="color:var(--muted)">imposée</span>'}</td>` +
+          `<td><select aria-label="Valeur retenue pour ${s.refs[k]}" data-sec="${i}" data-key="${k}">${opts}</select></td>` +
+          `<td class="num">${isR ? chip(val / exv - 1, [0.03, 0.08]) : ''}</td><td>${mod ? '<span class="chip mod">modifiée</span>' : ''}</td></tr>`;
+      }
+    });
+    $('bom').innerHTML = b + '</tbody>';
+    $('btnReset').disabled = !anyMod;
+    drawCharts();
+  }
+
+  function typeset(el) {
+    const MJ = window.MathJax;
+    if (MJ && MJ.typesetPromise) { if (MJ.typesetClear) MJ.typesetClear([el]); MJ.typesetPromise([el]).catch(() => {}); }
+  }
+
+  // ---------- run ----------
+  let timer = null;
+  function run() {
+    const { p, errs } = readParams();
+    renderCartouche(p);
+    save();
+    if (errs.length) {
+      $('alerts').innerHTML = `<div class="alert err"><b>Paramètres à corriger :</b> ${errs.join(' ')}</div>`;
+      return;
+    }
+    state.D = SKM.design(p);
+    assignRefs(state.D);
+    analyzeAndRender();
+  }
+  function analyzeAndRender() {
+    const D = state.D;
+    if (D.secs.every(s => s.comps)) state.an = SKM.analyze(D, { op: { on: D.p.opOn, gbw: D.p.gbw, pm: D.p.pm, gbwTol: D.p.gbwTol, pmTol: D.p.pmTol }, tolR: D.p.tolR, tolC: D.p.tolC, samples: 400 });
+    render();
+  }
+  const schedule = () => { clearTimeout(timer); timer = setTimeout(run, 120); };
+
+  restore();
+  $('form').addEventListener('input', schedule);
+  $('form').addEventListener('change', schedule);
+  $('form').addEventListener('submit', e => e.preventDefault());
+  document.querySelectorAll('input[name="view"]').forEach(r => r.addEventListener('change', () => { state.view = r.value; drawCharts(); }));
+  document.querySelectorAll('input[name="tab"]').forEach(r => r.addEventListener('change', () => { state.tab = r.value; drawCharts(); }));
+  $('bom').addEventListener('change', e => {
+    const sel = e.target.closest('select');
+    if (!sel) return;
+    const s = state.D.secs[+sel.dataset.sec];
+    s.comps[sel.dataset.key] = +sel.value;
+    analyzeAndRender();
+  });
+  const hl = ref => {
+    const svg = $('schem').querySelector('svg');
+    if (!svg) return;
+    svg.classList.toggle('dim', !!ref);
+    svg.querySelectorAll('.comp').forEach(g => g.classList.toggle('hl', g.dataset.ref === ref));
+  };
+  $('bom').addEventListener('mouseover', e => { const tr = e.target.closest('tr[data-ref]'); hl(tr ? tr.dataset.ref : null); });
+  $('bom').addEventListener('mouseleave', () => hl(null));
+  $('bom').addEventListener('focusin', e => { const tr = e.target.closest('tr[data-ref]'); hl(tr ? tr.dataset.ref : null); });
+  $('bom').addEventListener('focusout', () => hl(null));
+  $('btnReset').addEventListener('click', () => { state.D.secs.forEach(s => { s.comps = { ...s.best }; }); analyzeAndRender(); });
+  $('btnCopy').addEventListener('click', async () => {
+    const D = state.D;
+    if (!D) return;
+    const lines = ['Repère\tValeur\tCellule\tFonction'];
+    D.secs.forEach((s, i) => s.keys.forEach(([k, role]) => lines.push(`${s.refs[k]}\t${eng(s.comps[k], k[0] === 'R' ? 'Ω' : 'F', 3).replace(' ', ' ')}\t${i + 1}\t${role}`)));
+    const txt = lines.join('\n'), btn = $('btnCopy');
+    try { await navigator.clipboard.writeText(txt); btn.textContent = 'Copié'; }
+    catch (err) {
+      const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+      ta.remove(); btn.textContent = ok ? 'Copié' : 'Copie refusée par le navigateur';
+    }
+    setTimeout(() => { btn.textContent = 'Copier pour un tableur'; }, 1800);
+  });
+  if ('ResizeObserver' in window) {
+    let rt = null, lastW = 0;
+    new ResizeObserver(entries => {
+      const wv = Math.round(entries[0].contentRect.width);
+      if (wv === lastW) return; lastW = wv;
+      clearTimeout(rt); rt = setTimeout(drawCharts, 60);
+    }).observe($('chGain'));
+  }
+  // ---------- export du rapport Excel ----------
+  const EXCELJS_URL = 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
+  let excelP = null;
+  function loadExcel() {
+    if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
+    if (!excelP) excelP = new Promise((res, rej) => {
+      const sc = document.createElement('script');
+      sc.src = EXCELJS_URL;
+      sc.onload = () => (window.ExcelJS ? res(window.ExcelJS) : rej(new Error('bibliothèque Excel absente')));
+      sc.onerror = () => { excelP = null; rej(new Error('la bibliothèque Excel n\'a pas pu être chargée')); };
+      document.head.appendChild(sc);
+    });
+    return excelP;
+  }
+  const STYLE_PROPS = ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-linecap', 'stroke-linejoin', 'opacity', 'font-family', 'font-size', 'font-weight', 'visibility'];
+  // SVG de la page → PNG, couleurs du thème clair, styles recopiés en ligne
+  function svgToPng(markup, scale) {
+    return new Promise((resolve, reject) => {
+      const holder = document.createElement('div');
+      holder.className = 'export-light';
+      holder.style.cssText = 'position:fixed;left:-20000px;top:0;';
+      holder.innerHTML = markup;
+      document.body.appendChild(holder);
+      const svg = holder.querySelector('svg');
+      svg.querySelectorAll('.hov,.hd,.ov').forEach(n => n.remove());
+      for (const el of [svg, ...svg.querySelectorAll('*')]) {
+        const cs = getComputedStyle(el);
+        let st = '';
+        for (const pName of STYLE_PROPS) st += `${pName}:${cs.getPropertyValue(pName)};`;
+        if (el.tagName.toLowerCase() === 'rect') { const rx = parseFloat(cs.getPropertyValue('rx')); if (rx > 0) el.setAttribute('rx', rx); }
+        el.setAttribute('style', st);
+      }
+      const W = +svg.getAttribute('width'), H = +svg.getAttribute('height');
+      svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      const bg = getComputedStyle(holder).getPropertyValue('--sheet').trim() || '#ffffff';
+      const str = new XMLSerializer().serializeToString(svg);
+      holder.remove();
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = Math.round(W * scale); c.height = Math.round(H * scale);
+        const g = c.getContext('2d');
+        g.fillStyle = bg; g.fillRect(0, 0, c.width, c.height);
+        g.drawImage(img, 0, 0, c.width, c.height);
+        try { resolve({ dataUrl: c.toDataURL('image/png'), w: W, h: H }); } catch (e) { reject(e); }
+      };
+      img.onerror = () => reject(new Error('conversion d\'image impossible'));
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(str);
+    });
+  }
+  function chartMarkup(o, width) {
+    const host = document.createElement('div');
+    host.className = 'export-light';
+    host.style.cssText = `position:fixed;left:-20000px;top:0;width:${width}px`;
+    document.body.appendChild(host);
+    chart(host, o);
+    const svg = host.querySelector('svg').outerHTML;
+    host.remove();
+    return svg;
+  }
+  function exportCharts(an, D) {
+    const p = D.p, bp = p.kind === 'bp', fLo = bp ? p.fL : p.fc, fHi = bp ? p.fH : p.fc;
+    const xMin = fLo / 100, xMax = fHi * 100, nn = bp ? p.n / 2 : p.n;
+    const markers = bp ? [{ f: p.fL, label: '' }, { f: p.fH, label: '' }, { f: p.f0, label: 'f₀' }] : [{ f: p.fc, label: 'fc' }];
+    const series = (r, i) => [{ key: 'real', cls: 's-real', label: 'Retenus', y: r }, { key: 'ideal', cls: 's-ideal', label: 'Idéal', y: i }];
+    const gain = chartMarkup({
+      f: an.f, xMin, xMax, yMin: -40 * nn, yMax: 10, yTicks: ticks(-40 * nn, 10, Math.min(11, nn * 2 + 2)), height: 340, markers,
+      band: { lo: an.mc.lo, hi: an.mc.hi }, yTitle: 'Gain (dB)', yTick: v => num(v), yFmt: v => num(v), series: series(an.rdB, an.idB)
+    }, 1000);
+    let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i < an.f.length; i++) { lo = Math.min(lo, an.iPh[i], an.rPh[i], an.mc.plo[i]); hi = Math.max(hi, an.iPh[i], an.rPh[i], an.mc.phi[i]); }
+    const st = hi - lo > 300 ? 90 : 45, y0 = Math.floor(lo / st) * st, y1 = Math.ceil(hi / st) * st, tk = [];
+    for (let v = y0; v <= y1; v += st) tk.push(v);
+    const phase = chartMarkup({
+      f: an.f, xMin, xMax, yMin: y0, yMax: y1 === y0 ? y0 + st : y1, yTicks: tk, height: 300, markers,
+      band: { lo: an.mc.plo, hi: an.mc.phi }, yTitle: 'Phase (°)', yTick: v => num(v) + '°', yFmt: v => num(v), series: series(an.rPh, an.iPh)
+    }, 1000);
+    return { gain, phase };
+  }
+
+  async function buildWorkbook() {
+    const ExcelJS = await loadExcel();
+    const D = state.D, an = state.an, p = D.p, T = an.tol;
+    const KIND = { lp: 'Passe-bas', hp: 'Passe-haut', bp: 'Passe-bande' };
+    const PINK = 'FFFF6FAE', SOFT = 'FFFFE3EF', LAV = 'FFECE6FF', INK = 'FF4B2A55', MUTED = 'FF9A7AA3';
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'Calculateur Sallen-Key'; wb.created = new Date();
+    const header = row => {
+      row.eachCell(c => {
+        c.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: PINK } };
+        c.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+      });
+      row.height = 32;
+    };
+    const section = (ws, text) => { ws.addRow([]); const r = ws.addRow([text]); r.font = { bold: true, size: 13, color: { argb: 'FFE94F93' } }; };
+    const kv = (ws, k, v, fmt) => {
+      const r = ws.addRow([k, v]);
+      r.getCell(1).font = { bold: true, color: { argb: INK } };
+      r.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: SOFT } };
+      if (fmt) r.getCell(2).numFmt = fmt;
+      r.getCell(2).alignment = { wrapText: true, vertical: 'top' };
+      return r;
+    };
+    const hz = v => isFinite(v) ? eng(v, 'Hz', 4).replace(' ', ' ') : '—';
+    const t = s => String(s).replace(/ /g, ' ');
+
+    // ----- Synthèse -----
+    const ws = wb.addWorksheet('Synthèse', { properties: { tabColor: { argb: PINK } } });
+    ws.columns = [{ width: 34 }, { width: 58 }, { width: 3 }];
+    const tr = ws.addRow(['Rapport · Filtre Sallen-Key à gain unitaire']);
+    tr.font = { bold: true, size: 18, color: { argb: INK } }; tr.height = 30;
+    const dr = ws.addRow([`Généré le ${new Date().toLocaleString('fr-FR')}`]); dr.font = { italic: true, color: { argb: MUTED } };
+    section(ws, 'Paramètres');
+    kv(ws, 'Type', KIND[p.kind]);
+    kv(ws, 'Réponse', APPROX[p.approx] + (p.approx === 'cheb' ? ` ${t(num(p.ripple))} dB, fc à ${p.chebRef === 'ripple' ? 'la fin de l\'ondulation' : '−3 dB'}` : ''));
+    kv(ws, 'Ordre', p.n);
+    if (p.kind === 'bp') { kv(ws, 'Fréquence centrale f₀ (Hz)', p.f0, '#,##0.00'); kv(ws, 'Bande passante Δf à −3 dB (Hz)', p.df, '#,##0.00'); kv(ws, 'Coupures visées (Hz)', `${hz(p.fL)} – ${hz(p.fH)}`); if (D.bpInfo) kv(ws, 'Réalisation ordre 4', D.bpInfo.used === 'bp' ? '2 cellules passe-bande' : 'passe-haut + passe-bas'); }
+    else kv(ws, 'Fréquence de coupure fc (Hz)', p.fc, '#,##0.00');
+    kv(ws, 'Résistances', `${p.rSer}, ${t(eng(p.rMin, 'Ω'))} à ${t(eng(p.rMax, 'Ω'))}, tolérance ±${t(num(p.tolR * 100))} %`);
+    kv(ws, 'Condensateurs', `${p.cSer}, ${t(eng(p.cMin, 'F'))} à ${t(eng(p.cMax, 'F'))}, tolérance ±${t(num(p.tolC * 100))} %`);
+    kv(ws, 'AOP', an.opOn ? `GBW ${t(eng(p.gbw, 'Hz'))} ±${t(num(p.gbwTol * 100))} %, marge de phase ${t(num(p.pm))}° ±${t(num(p.pmTol))}° (tirés pour chaque AOP)` : 'idéal');
+    section(ws, 'Résultats (composants retenus)');
+    const SL = statList(an);
+    if (p.kind === 'bp') { kv(ws, 'f₀ obtenue (Hz)', an.bpNom.r.f0, '#,##0.00'); kv(ws, 'Δf obtenue (Hz)', an.bpNom.r.bw, '#,##0.00'); kv(ws, 'Gain au centre (dB)', an.peakR, '0.00'); }
+    else { kv(ws, 'f −3 dB idéale (Hz)', an.f3i, '#,##0.00'); kv(ws, 'f −3 dB obtenue (Hz)', an.f3r, '#,##0.00'); }
+    kv(ws, 'Écart max en bande passante (dB)', an.dev, '0.000');
+    for (const E of SL) {
+      kv(ws, `${E.short} · 95 % des tirages (Hz)`, `${hz(E.p025)} – ${hz(E.p975)}`);
+      kv(ws, `${E.short} · pire cas (Hz)`, isFinite(E.wcMin) ? `${hz(E.wcMin)} – ${hz(E.wcMax)}` : '—');
+    }
+    kv(ws, 'Cas analysés', `${T.total} (${T.corners || 0} combinaisons extrêmes + ${T.samples} tirages Monte-Carlo)`);
+    kv(ws, 'GBW conseillé (Hz)', state.gbwNeed, '#,##0');
+    section(ws, 'Stabilité');
+    const vr = kv(ws, 'Verdict', state.verdict.label);
+    vr.getCell(2).font = { bold: true, color: { argb: state.verdict.cls === 'ok' ? 'FF22A07C' : state.verdict.cls === 'warn' ? 'FFD98A12' : 'FFE8436A' } };
+    kv(ws, 'Détail', t(state.verdict.text));
+    state.verdict.extra.forEach(x => kv(ws, '', t(x)));
+    section(ws, 'Fonction de transfert');
+    an.coefs.forEach((c, i) => {
+      const den = c.order === 2 ? `1 + ${sci(c.a1)}·s + ${sci(c.a2)}·s²` : `1 + ${sci(c.a1)}·s`;
+      const nm = c.bp ? `${sci(c.b1)}·s` : c.hp ? (c.order === 2 ? `${sci(c.a2)}·s²` : `${sci(c.a1)}·s`) : '1';
+      kv(ws, `H${i + 1}(s)`, `${nm} / (${den})`);
+    });
+    kv(ws, 'H(s)', an.coefs.map((_, i) => `H${i + 1}(s)`).join(' · '));
+    ws.eachRow(r => { r.alignment = Object.assign({ vertical: 'top' }, r.alignment || {}); });
+
+    // images : schéma, gain, phase
+    const imgs = [];
+    const schemSvg = $('schem').querySelector('svg');
+    if (schemSvg) imgs.push(['Schéma', await svgToPng(schemSvg.outerHTML, 2)]);
+    const ch = exportCharts(an, D);
+    imgs.push(['Gain (dB) · idéal en pointillés, retenus en trait plein, dispersion en zone claire', await svgToPng(ch.gain, 2)]);
+    imgs.push(['Phase (°) · idéal en pointillés, retenus en trait plein, dispersion en zone claire', await svgToPng(ch.phase, 2)]);
+    const wi = wb.addWorksheet('Schéma et courbes', { properties: { tabColor: { argb: 'FF8B74F0' } } });
+    wi.columns = [{ width: 4 }, { width: 140 }];
+    let row = 1;
+    for (const [label, im] of imgs) {
+      const lr = wi.getRow(row); lr.getCell(2).value = label; lr.getCell(2).font = { bold: true, size: 13, color: { argb: 'FFE94F93' } };
+      const scale = Math.min(1, 980 / im.w), w = im.w * scale, h = im.h * scale;
+      const id = wb.addImage({ base64: im.dataUrl, extension: 'png' });
+      wi.addImage(id, { tl: { col: 1, row: row }, ext: { width: w, height: h } });
+      row += Math.ceil(h / 20) + 3;
+    }
+
+    // ----- Composants -----
+    const wc = wb.addWorksheet('Composants', { properties: { tabColor: { argb: 'FF22A07C' } }, views: [{ state: 'frozen', ySplit: 1 }] });
+    wc.columns = [
+      { header: 'Repère', key: 'ref', width: 9 }, { header: 'Cellule', key: 'cell', width: 9 }, { header: 'Type de cellule', key: 'type', width: 26 },
+      { header: 'Fonction', key: 'role', width: 26 }, { header: 'Valeur calculée', key: 'ex', width: 16, style: { numFmt: '##0.000E+0' } },
+      { header: 'Valeur retenue', key: 'val', width: 16, style: { numFmt: '##0.000E+0' } }, { header: 'Unité', key: 'unit', width: 7 },
+      { header: 'Notation', key: 'rkm', width: 11 }, { header: 'Lisible', key: 'txt', width: 13 }, { header: 'Écart / calculée', key: 'err', width: 15, style: { numFmt: '+0.00%;-0.00%;0.00%' } },
+      { header: 'Série', key: 'ser', width: 8 }, { header: 'Tolérance', key: 'tol', width: 10, style: { numFmt: '0.0%' } }, { header: 'Modifiée', key: 'mod', width: 10 }
+    ];
+    header(wc.getRow(1));
+    const TN = { lp: 'passe-bas', hp: 'passe-haut', bp: 'passe-bande' };
+    D.secs.forEach((s, i) => {
+      const ex = SKM.exactValues(s, p.kind);
+      for (const [k, role] of s.keys) {
+        const isR = k[0] === 'R', val = s.comps[k], exv = isR ? ex[k] : null;
+        wc.addRow({
+          ref: s.refs[k], cell: i + 1, type: s.order === 2 ? 'Sallen-Key ' + TN[s.kind] : 'RC ' + TN[s.kind] + ' + suiveur', role,
+          ex: isR && isFinite(exv) ? exv : null, val, unit: isR ? 'Ω' : 'F', rkm: rkm(val, k[0]), txt: t(eng(val, isR ? 'Ω' : 'F')),
+          err: isR && isFinite(exv) ? val / exv - 1 : null, ser: isR ? p.rSer : p.cSer, tol: isR ? p.tolR : p.tolC,
+          mod: Math.abs(val / s.best[k] - 1) > 1e-9 ? 'oui' : ''
+        });
+      }
+    });
+    D.secs.forEach((s, i) => wc.addRow({ ref: s.U, cell: i + 1, type: 'AOP', role: 'Suiveur (gain unitaire)', txt: an.opOn ? `GBW ${t(eng(p.gbw, 'Hz'))}` : 'idéal' }));
+    wc.autoFilter = { from: 'A1', to: 'M1' };
+
+    // ----- Cellules -----
+    const wl = wb.addWorksheet('Cellules', { views: [{ state: 'frozen', ySplit: 1 }] });
+    wl.columns = [
+      { header: 'Cellule', width: 8 }, { header: 'AOP', width: 6 }, { header: 'Type', width: 24 },
+      { header: 'f₀ cible (Hz)', width: 13, style: { numFmt: '#,##0.00' } }, { header: 'f₀ obtenue (Hz)', width: 14, style: { numFmt: '#,##0.00' } }, { header: 'Écart f₀', width: 10, style: { numFmt: '+0.00%;-0.00%' } },
+      { header: 'Q cible', width: 9, style: { numFmt: '0.000' } }, { header: 'Q obtenu', width: 9, style: { numFmt: '0.000' } }, { header: 'Écart Q', width: 10, style: { numFmt: '+0.00%;-0.00%' } },
+      { header: 'f₀ min (Hz)', width: 12, style: { numFmt: '#,##0.00' } }, { header: 'f₀ max (Hz)', width: 12, style: { numFmt: '#,##0.00' } },
+      { header: 'Q min', width: 8, style: { numFmt: '0.000' } }, { header: 'Q max', width: 8, style: { numFmt: '0.000' } }, { header: 'Q avec AOP (max)', width: 12, style: { numFmt: '0.000' } },
+      { header: 'Surtension max (dB)', width: 12, style: { numFmt: '0.00' } }, { header: 'ζ min (AOP)', width: 10, style: { numFmt: '0.000' } },
+      { header: 'GBW conseillé (Hz)', width: 14, style: { numFmt: '#,##0' } }, { header: 'Verdict', width: 18 }
+    ];
+    header(wl.getRow(1));
+    D.secs.forEach((s, i) => {
+      const sp = an.secParams[i], cs = T.cells[i], f0 = s.w0 / 2 / Math.PI, two = s.order === 2;
+      wl.addRow([i + 1, s.U, two ? 'Sallen-Key ' + TN[s.kind] : 'RC ' + TN[s.kind] + ' + suiveur', f0, sp.w0 / 2 / Math.PI, sp.w0 / s.w0 - 1,
+        two ? s.Q : null, two ? sp.Q : null, two ? sp.Q / s.Q - 1 : null, cs.f0min / 2 / Math.PI, cs.f0max / 2 / Math.PI,
+        two ? cs.Qmin : null, two ? cs.Qmax : null, two && an.opOn && isFinite(cs.qEffMax) ? cs.qEffMax : null, cs.peakMax,
+        an.opOn && isFinite(cs.zetaMin) ? cs.zetaMin : null, two ? 100 * s.Q * f0 : 10 * f0, s._verdict || '']);
+    });
+
+    // ----- Réponse fréquentielle -----
+    const wr = wb.addWorksheet('Réponse fréquentielle', { properties: { tabColor: { argb: 'FF8B74F0' } }, views: [{ state: 'frozen', ySplit: 3 }] });
+    wr.columns = [{ width: 14 }, { width: 13 }, { width: 13 }, { width: 13 }, { width: 13 }, { width: 13 }, { width: 13 }, { width: 13 }, { width: 13 }, { width: 15 }, { width: 15 }];
+    const note = wr.addRow([`Dispersion : enveloppe min/max sur ${T.total} cas (pire cas + Monte-Carlo), R ±${t(num(p.tolR * 100))} %, C ±${t(num(p.tolC * 100))} %` + (an.opOn ? `, AOP GBW ±${t(num(p.gbwTol * 100))} % et marge ±${t(num(p.pmTol))}°` : ', AOP idéal') + (an.normalized ? '. Gains ramenés à 0 dB au maximum de chaque courbe.' : '.')]);
+    note.font = { italic: true, color: { argb: MUTED } };
+    wr.mergeCells('A1:K1');
+    wr.addRow([]);
+    const hr = wr.addRow(['Fréquence (Hz)', 'Gain idéal (dB)', 'Gain retenu (dB)', 'Gain min (dB)', 'Gain max (dB)', 'Phase idéale (°)', 'Phase retenue (°)', 'Phase min (°)', 'Phase max (°)', 'Retard de groupe idéal (s)', 'Retard de groupe retenu (s)']);
+    header(hr);
+    for (let i = 0; i < an.f.length; i++) {
+      const r = wr.addRow([an.f[i], an.idB[i], an.rdB[i], an.mc.lo[i], an.mc.hi[i], an.iPh[i], an.rPh[i], an.mc.plo[i], an.mc.phi[i], an.iGd[i], an.rGd[i]]);
+      r.getCell(1).numFmt = '#,##0.000';
+      for (let c = 2; c <= 5; c++) r.getCell(c).numFmt = '0.000';
+      for (let c = 6; c <= 9; c++) r.getCell(c).numFmt = '0.00';
+      r.getCell(10).numFmt = '0.000E+00'; r.getCell(11).numFmt = '0.000E+00';
+    }
+    wr.autoFilter = { from: 'A3', to: 'K3' };
+
+    // ----- Tolérances -----
+    const wt = wb.addWorksheet('Tolérances', { views: [{ state: 'frozen', ySplit: 1 }] });
+    wt.columns = [{ width: 30 }, { width: 14 }, { width: 14 }, { width: 14 }, { width: 14 }, { width: 14 }, { width: 14 }];
+    header(wt.addRow(['Grandeur', 'Idéale (Hz)', 'Nominale (Hz)', '95 % · bas (Hz)', '95 % · haut (Hz)', 'Pire cas · min (Hz)', 'Pire cas · max (Hz)']));
+    SL.forEach(E => {
+      const r = wt.addRow([E.label, E.i, E.r, E.p025, E.p975, isFinite(E.wcMin) ? E.wcMin : null, isFinite(E.wcMax) ? E.wcMax : null]);
+      for (let c = 2; c <= 7; c++) r.getCell(c).numFmt = '#,##0.00';
+    });
+    wt.addRow([]);
+    const tt = wt.addRow([`Tirages Monte-Carlo (${T.samples}) : valeurs triées`]); tt.font = { bold: true, color: { argb: 'FFE94F93' } };
+    header(wt.addRow(['Rang', ...SL.map(E => E.label + ' (Hz)')]));
+    const nMax = Math.max(...SL.map(E => E.mc.length));
+    for (let i = 0; i < nMax; i++) {
+      const r = wt.addRow([i + 1, ...SL.map(E => E.mc[i] ?? null)]);
+      for (let c = 2; c <= SL.length + 1; c++) r.getCell(c).numFmt = '#,##0.00';
+    }
+
+    const buf = await wb.xlsx.writeBuffer();
+    const fpart = p.kind === 'bp' ? `f0-${Math.round(p.f0)}Hz_df-${Math.round(p.df)}Hz` : `fc-${Math.round(p.fc)}Hz`;
+    const name = `sallen-key_${KIND[p.kind].toLowerCase()}_${APPROX[p.approx].toLowerCase()}_ordre${p.n}_${fpart}.xlsx`;
+    return { buf, name };
+  }
+
+  // Dans Claude : capacité « downloads ». Hébergé ailleurs (GitHub Pages…) : téléchargement classique du navigateur.
+  const standalone = !(window.claude && window.claude.use);
+  let downloads = null;
+  (async () => {
+    if (standalone) { $('btnExport').hidden = false; return; }
+    try { downloads = await window.claude.use('downloads'); } catch (e) { downloads = null; }
+    $('btnExport').hidden = !downloads;
+  })();
+  function saveLocal(name, blob) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+    return { status: 'saved' };
+  }
+  $('btnExport').addEventListener('click', async () => {
+    if ((!downloads && !standalone) || !state.an) return;
+    const btn = $('btnExport'), msg = $('exportMsg');
+    btn.disabled = true; msg.textContent = 'Préparation du rapport…';
+    try {
+      const { buf, name } = await buildWorkbook();
+      const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      if (!standalone) msg.textContent = 'Confirme l\'enregistrement…';
+      const r = standalone ? saveLocal(name, blob) : await downloads.save({ filename: name, data: blob });
+      msg.textContent = r && r.status === 'delivered' ? '' : 'Rapport enregistré ✿';
+    } catch (e) {
+      const c = e && e.code;
+      const gone = ['unavailable', 'not_granted', 'capability_disabled', 'capability_removed', 'extension_not_enabled'];
+      msg.textContent = c === 'declined' ? 'Export annulé.' : c === 'rate_limited' ? 'Une confirmation est déjà ouverte : réessaie dans un instant.'
+        : gone.includes(c) ? 'L\'export Excel n\'est pas disponible dans cette vue.' : 'Export impossible : ' + ((e && e.message) || 'erreur inconnue') + '.';
+      if (gone.includes(c)) btn.hidden = true;
+    } finally { btn.disabled = false; }
+  });
+  window.__skBuildWorkbook = buildWorkbook;
+  run();
+})();
+
+</script>
+
+</body>
+</html>
